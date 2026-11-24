@@ -1,0 +1,6 @@
+interface:
+  display_name: "Split Vue Components"
+  short_description: "Split oversized Vue components safely"
+  default_prompt: "Use $vue-split-components to split these oversized Vue components along clear seams."
+policy:
+  allow_implicit_invocation: false

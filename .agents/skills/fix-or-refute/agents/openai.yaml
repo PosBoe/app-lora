@@ -1,0 +1,6 @@
+interface:
+  display_name: "Fix or Refute"
+  short_description: "Verify review findings before fixing them"
+  default_prompt: "Use $fix-or-refute to verify these review findings before planning any fixes."
+policy:
+  allow_implicit_invocation: false

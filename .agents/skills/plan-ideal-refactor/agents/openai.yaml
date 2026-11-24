@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ideal Refactor Plan"
+  short_description: "Plan an ideal evidence-backed refactor for any scope"
+  default_prompt: "Use $plan-ideal-refactor to produce an evidence-backed refactoring plan for this scope."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,24 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "include": [
+    "uno.config.ts",
+    "src/lib/tokens.ts",
+    "packages.ts",
+    "scripts/**/*.ts",
+    "vite.config.*",
+    "vitest.*.ts",
+    "eslint.config.ts"
+  ],
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2022", "dom"],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["node"]
+  }
+}

@@ -1,0 +1,14 @@
+# Development config. `task init` copies it to config/dev.yml, which git
+# ignores. Edit config/dev.yml, not this file.
+site:
+  url: http://localhost:5173
+
+listen:
+  http: :8080
+
+pg:
+  dsn: postgres://lora:lora@localhost:5432/lora_dev?sslmode=disable
+
+logging:
+  level: debug
+  format: text

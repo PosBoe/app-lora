@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Datadriven Tests"
+  short_description: "Author and audit Go datadriven tests"
+  default_prompt: "Use $go-test-datadriven to author or audit these datadriven tests in the repository style."
+policy:
+  allow_implicit_invocation: false

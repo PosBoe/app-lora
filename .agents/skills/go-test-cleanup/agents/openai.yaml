@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Test Cleanup"
+  short_description: "Make Go tests concise and easy to read"
+  default_prompt: "Use $go-test-cleanup to make these Go tests clear, self-contained, and easy to read."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Domain Modeling"
+  short_description: "Build and refine the project domain model"
+  default_prompt: "Use $domain-modeling to build and sharpen the domain model for this scope."
+policy:
+  allow_implicit_invocation: false

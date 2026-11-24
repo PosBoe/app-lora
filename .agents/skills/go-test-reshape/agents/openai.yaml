@@ -1,0 +1,6 @@
+interface:
+  display_name: "Reshape Go Tests"
+  short_description: "Reshape Go tests and their file layout"
+  default_prompt: "Use $go-test-reshape to improve the granularity and file layout of these Go tests."
+policy:
+  allow_implicit_invocation: false

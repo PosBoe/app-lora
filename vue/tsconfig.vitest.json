@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  // Re-include the spec files that tsconfig.app.json excludes.
+  "exclude": [],
+  "compilerOptions": {
+    "lib": ["ES2022", "dom"],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo",
+    "types": ["node", "jsdom"]
+  }
+}

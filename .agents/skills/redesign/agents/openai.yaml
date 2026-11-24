@@ -1,0 +1,6 @@
+interface:
+  display_name: "Redesign"
+  short_description: "Flip each decision in a scope and price it against its goals"
+  default_prompt: "Use $redesign to discover the decisions this scope makes, flip each one with evidence, and recommend a consistent set."
+policy:
+  allow_implicit_invocation: false

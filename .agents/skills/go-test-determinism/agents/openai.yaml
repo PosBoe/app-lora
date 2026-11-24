@@ -1,0 +1,6 @@
+interface:
+  display_name: "Deterministic Go Tests"
+  short_description: "Find and fix nondeterministic Go tests"
+  default_prompt: "Use $go-test-determinism to find and fix nondeterminism in this Go package's tests."
+policy:
+  allow_implicit_invocation: false

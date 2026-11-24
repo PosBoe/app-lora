@@ -1,0 +1,88 @@
+version: "2"
+
+# The linter set follows the reference stack. A linter joins the gate by being
+# enabled here, and it leaves the gate by being removed here. Do not leave an
+# enabled linter failing.
+
+linters:
+  default: none
+
+  enable:
+    - errcheck        # unchecked errors
+    - staticcheck     # bug/pitfall detection
+    - govet           # go vet
+    - errorlint       # proper error wrapping/comparison
+    - exhaustive      # ensure switches are exhaustive
+    - gocritic        # extra bug detection
+    - unused          # unused vars, consts, funcs
+    - ineffassign     # ineffective assignments
+    - nolintlint      # keeps the //nolint directives honest
+    - gosec           # security issues
+    - wastedassign    # unused value assignments
+    - unconvert       # unnecessary conversions
+    - copyloopvar     # a loop-variable copy Go 1.22 made redundant
+    - testifylint     # testify assertions that say what failed
+
+  settings:
+    testifylint:
+      enable-all: true
+    staticcheck:
+      checks:
+        - all
+        - '-QF1008'
+        - '-ST1000'
+        - '-ST1003'
+    gocritic:
+      enabled-checks:
+        - rangeValCopy
+      disabled-checks:
+        - singleCaseSwitch
+        - commentFormatting
+    errcheck:
+      # Writes to an in-memory buffer or to the process stdout. The caller
+      # cannot act on such an error.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+    nolintlint:
+      # A suppression names the linter it suppresses and says why.
+      require-explanation: true
+      require-specific: true
+    errorlint:
+      comparison: false
+      allowed-errors-wildcard:
+        - err: "io.EOF"
+    exhaustive:
+      explicit-exhaustive-switch: true
+      explicit-exhaustive-map: true
+    gosec:
+      excludes:
+        - G115
+      config:
+        G301: "0o755"
+        G306: "0o644"
+
+  exclusions:
+    paths:
+      - .*_gen.go$
+    rules:
+      # Keep the noisy linters off test files.
+      - path: _test\.go$
+        linters:
+          - errcheck
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+
+run:
+  timeout: 10m
+  relative-path-mode: cfg
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

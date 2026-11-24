@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Test Lock-in Audit"
+  short_description: "Find Go tests that preserve wrong behavior"
+  default_prompt: "Use $go-test-lockin to find tests in this Go package that preserve wrong behavior."
+policy:
+  allow_implicit_invocation: false

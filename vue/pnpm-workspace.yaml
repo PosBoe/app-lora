@@ -1,0 +1,5 @@
+# Dependencies that may run an install script. A new one is refused until it
+# is listed here.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true

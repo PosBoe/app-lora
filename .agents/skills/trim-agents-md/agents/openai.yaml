@@ -1,0 +1,6 @@
+interface:
+  display_name: "Trim AGENTS.md"
+  short_description: "Trim AGENTS.md files to operative rules and route the rest"
+  default_prompt: "Use $trim-agents-md to audit this scope's AGENTS.md files and route each rule to its right home."
+policy:
+  allow_implicit_invocation: false

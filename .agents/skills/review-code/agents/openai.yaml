@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Review code or a change for concrete defects"
+  default_prompt: "Use $review-code to review this scope or change for concrete defects and failure scenarios."
+policy:
+  allow_implicit_invocation: false

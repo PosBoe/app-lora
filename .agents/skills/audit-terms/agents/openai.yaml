@@ -1,0 +1,6 @@
+interface:
+  display_name: "Audit Terms"
+  short_description: "Audit domain terms and plan clear renames"
+  default_prompt: "Use $audit-terms to audit this scope's vocabulary and propose clear recognized terms."
+policy:
+  allow_implicit_invocation: false

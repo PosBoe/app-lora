@@ -1,0 +1,13 @@
+# Test config. `task init` copies it to config/test.yml, which git ignores.
+site:
+  url: http://localhost:8080
+
+listen:
+  http: :8081
+
+pg:
+  dsn: postgres://lora:lora@localhost:5432/lora_test?sslmode=disable
+
+logging:
+  level: warn
+  format: text

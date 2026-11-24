@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Test Coverage"
+  short_description: "Add tests for uncovered public Go contracts"
+  default_prompt: "Use $go-test-coverage to add coverage for this Go package's uncovered public contracts."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,47 @@
+version: '3'
+
+# Per-environment database lifecycle. The root Taskfile includes it two times
+# (dev, test), parameterized by ENV (which config/<ENV>.yml to use).
+#
+# Declare the environment per task, not at file level. Task merges an included
+# file's file-level `env` into the global environment, where ENV is undefined.
+
+tasks:
+  # The single place that shells out to the Go CLI for this environment.
+  cli:
+    internal: true
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/{{.ENV}}.yml'
+    cmds:
+      - go run ./cmd/lora {{.ENGINE}} {{.CMD}} {{.ARGS}}
+
+  # pg:* forwards a subcommand to `lora pg`: create_db, drop_db, ping.
+  pg:*:
+    desc: 'Run a `lora pg` subcommand against this environment, e.g. task dev:pg:ping'
+    cmds:
+      - task: cli
+        vars: { ENGINE: pg, CMD: '{{index .MATCH 0}}', ARGS: '{{.CLI_ARGS}}' }
+
+  # migrate:* forwards a subcommand to `lora migrate`: up, down, status,
+  # create. Arguments go after --, e.g. `task dev:migrate:create -- add_users`.
+  migrate:*:
+    desc: 'Run a `lora migrate` subcommand against this environment, e.g. task dev:migrate:status'
+    cmds:
+      - task: cli
+        vars: { ENGINE: migrate, CMD: '{{index .MATCH 0}}', ARGS: '{{.CLI_ARGS}}' }
+
+  migrate:
+    desc: 'Apply every pending migration'
+    cmds:
+      - task: cli
+        vars: { ENGINE: migrate, CMD: up }
+
+  reset:
+    desc: 'Drop the database, create it again, and migrate it'
+    cmds:
+      - task: cli
+        vars: { ENGINE: pg, CMD: drop_db }
+      - task: cli
+        vars: { ENGINE: pg, CMD: create_db }
+      - task: cli
+        vars: { ENGINE: migrate, CMD: up }

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design Doc"
+  short_description: "Distill repository goals into DESIGN.md"
+  default_prompt: "Use $design-doc to distill this scope's goals and frozen contracts into DESIGN.md."
+policy:
+  allow_implicit_invocation: false

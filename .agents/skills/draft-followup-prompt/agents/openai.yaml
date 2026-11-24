@@ -1,0 +1,5 @@
+interface:
+  display_name: "Draft follow-up prompt"
+  short_description: "Turn this session's open items into a prompt for a fresh agent"
+policy:
+  allow_implicit_invocation: false

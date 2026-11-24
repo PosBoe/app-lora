@@ -1,0 +1,6 @@
+interface:
+  display_name: "Run App"
+  short_description: "Launch and drive the web UI on a scratch database"
+  default_prompt: "Use $run-app to start the app on a scratch database and screenshot a page."
+policy:
+  allow_implicit_invocation: true

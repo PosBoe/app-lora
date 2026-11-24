@@ -1,0 +1,6 @@
+interface:
+  display_name: "Convert Go Tests to Datadriven"
+  short_description: "Convert existing Go tests to datadriven"
+  default_prompt: "Use $go-test-to-datadriven to convert these existing Go tests to datadriven tests."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Decouple Go Tests"
+  short_description: "Retarget Go tests to public behavior"
+  default_prompt: "Use $go-test-decouple to retarget these Go tests from internals to public behavior."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Benchmark Coverage"
+  short_description: "Build focused benchmarks for Go hot paths"
+  default_prompt: "Use $go-bench-coverage to assess and improve benchmark coverage for this Go package."
+policy:
+  allow_implicit_invocation: false

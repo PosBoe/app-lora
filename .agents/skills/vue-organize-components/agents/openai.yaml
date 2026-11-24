@@ -1,0 +1,6 @@
+interface:
+  display_name: "Organize Vue Components"
+  short_description: "Organize Vue component names and folders"
+  default_prompt: "Use $vue-organize-components to redesign these Vue component names and folders."
+policy:
+  allow_implicit_invocation: false

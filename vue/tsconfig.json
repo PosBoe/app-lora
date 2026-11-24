@@ -1,0 +1,17 @@
+{
+  // The solution file. It builds nothing itself; the projects below hold the settings.
+  //
+  // compilerOptions is here for UnoCSS, which loads uno.config.ts outside Vite and
+  // resolves `@/` against the nearest tsconfig.json.
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.vitest.json" }
+  ]
+}

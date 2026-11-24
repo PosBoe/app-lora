@@ -1,0 +1,29 @@
+/*
+ * Cascade layer order. It must load before the styles that Vuetify injects.
+ * See https://vuetifyjs.com/features/sass-variables/#enabling-css-cascade-layers
+ *
+ * Vuetify's utility layer is off ($utilities: false in src/styles/settings.scss).
+ * All utility markup uses the Tailwind-compatible classes that UnoCSS generates.
+ * The uno-* layer names come from outputToCssLayers in uno.config.ts.
+ */
+@layer uno-base,
+  uno-theme,
+  vuetify-core,
+  vuetify-components,
+  vuetify-overrides,
+  vuetify-utilities,
+  uno-shortcuts,
+  uno-default,
+  vuetify-final;
+
+@layer vuetify-core {
+  @layer reset, base;
+}
+
+@layer vuetify-utilities {
+  @layer theme-base, typography, helpers, theme-background, theme-foreground;
+}
+
+@layer vuetify-final {
+  @layer transitions, trumps;
+}

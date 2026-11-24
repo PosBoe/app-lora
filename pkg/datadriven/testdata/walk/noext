@@ -1,0 +1,9 @@
+> some-command
+----
+test name: TestWalk/noext
+
+# a comment, not a subtest
+
+> some-command
+----
+test name: TestWalk/noext

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Groom Go Tests"
+  short_description: "Run the complete Go test grooming pipeline"
+  default_prompt: "Use $go-test-groom to run the complete test grooming pipeline on this Go package."
+policy:
+  allow_implicit_invocation: false

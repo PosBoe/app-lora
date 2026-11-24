@@ -1,0 +1,206 @@
+version: '3'
+
+includes:
+  dev:
+    taskfile: ./Taskfile.db.yml
+    vars:
+      ENV: dev
+  test:
+    taskfile: ./Taskfile.db.yml
+    vars:
+      ENV: test
+
+vars:
+  GOLANGCI_LINT_VERSION: v2.13.2
+
+tasks:
+  init:
+    desc: 'Create missing configs from their defaults and enable pnpm'
+    cmds:
+      - task: config:init
+      - 'corepack enable pnpm || echo "corepack failed, install pnpm by hand"'
+
+  # The single owner of "materialize a missing config from its .default.yml,
+  # never clobber one a developer has customized".
+  config:init:
+    internal: true
+    cmds:
+      - |
+        for default in ./config/*.default.yml; do
+          config="${default%.default.yml}.yml"
+          if [ ! -f "$config" ]; then
+            cp "$default" "$config"
+            echo "created $config"
+          fi
+        done
+
+  tools:
+    desc: 'Install the Go tools the tasks use (golangci-lint)'
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
+  up:
+    desc: 'Start the local dependencies (PostgreSQL) via docker compose'
+    cmds:
+      - docker compose up -d --wait
+
+  down:
+    desc: 'Stop the local dependencies started by task up'
+    cmds:
+      - docker compose down --remove-orphans
+
+  dev:
+    # serve does not migrate the database. Run `task dev:migrate` after you
+    # pull or write a migration.
+    desc: 'Run the API server with live reload (run task dev:migrate first)'
+    aliases: [serve]
+    deps: [config:init]
+    cmds:
+      - watchexec --restart --exts go,yml -- go run -tags=invariants ./cmd/lora serve
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/dev.yml'
+
+  vue:
+    desc: 'Run the frontend dev server (proxies /api to the Go server)'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm dev
+
+  build:vue:
+    desc: 'Build vue/dist (the asset bundle the vue build tag embeds) and type-check it'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm build-only
+      - pnpm type-check
+
+  vue_deps:
+    internal: true
+    dir: '{{.ROOT_DIR}}/vue'
+    cmds:
+      - pnpm install
+    status:
+      - test -d node_modules
+
+  build:
+    desc: 'Build ./bin/lora with the frontend embedded. Override the version with VERSION=v1.2.3'
+    deps: [build:vue]
+    cmds:
+      - go build
+          -trimpath
+          -ldflags="-s -w -X {{.VERSION_IMPORT}}={{.VERSION}}"
+          -tags=vue
+          -o ./bin/lora
+          ./cmd/lora
+    vars:
+      VERSION_IMPORT: 'github.com/waneock/app-lora/pkg/version.Version'
+      GIT_COMMIT:
+        sh: git log -n 1 --format=%h 2>/dev/null || echo dev
+      VERSION: '{{.VERSION | default .GIT_COMMIT}}'
+    env:
+      CGO_ENABLED: 0
+
+  test:
+    desc: 'Pre-PR suite: go vet, Go tests (-short), frontend unit tests'
+    deps: [config:init]
+    cmds:
+      - task: test:vet
+      - task: test:go
+      - task: test:vue
+
+  test:vet:
+    desc: 'Run go vet on every package, with and without the build tags'
+    cmds:
+      - go vet ./...
+      - go vet -tags=invariants ./...
+
+  test:go:
+    desc: 'Run every Go test with -short'
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/test.yml'
+    cmds:
+      - go test -short ./...
+
+  test:full:
+    desc: 'Run every Go test without -short, including the testing.Short()-gated ones'
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/test.yml'
+    cmds:
+      - go test ./...
+
+  test:pkg:
+    desc: 'Test only the given packages, e.g. task test:pkg -- ./system/...'
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/test.yml'
+    cmds:
+      - go test -short {{.CLI_ARGS}}
+
+  test:race:
+    desc: 'Run the Go tests under the race detector'
+    env:
+      LORA_CONFIG: '{{.ROOT_DIR}}/config/test.yml'
+    cmds:
+      - go test -short -race ./...
+
+  test:vue:
+    desc: 'Run the frontend unit tests once'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm test:run
+
+  test:setup:
+    desc: 'Create the migrated lora_test database (needs task up). Rerunnable: drops it first.'
+    deps: [config:init]
+    cmds:
+      - task: test:reset
+
+  lint:
+    desc: 'Run golangci-lint and the frontend linter; a finding here blocks CI'
+    cmds:
+      - task: lint:go
+      - task: lint:vue
+
+  lint:go:
+    desc: 'Run golangci-lint (install it with task tools)'
+    cmds:
+      - golangci-lint run
+      - golangci-lint run --build-tags=invariants
+
+  lint:vue:
+    desc: 'Run ESLint on vue/'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm lint
+
+  fmt:
+    desc: 'Format Go and Vue.js code'
+    deps: [fmt:go, fmt:vue]
+
+  fmt:go:
+    desc: 'Format Go code with the formatter golangci-lint checks (gofmt)'
+    cmds:
+      - golangci-lint fmt
+
+  fmt:vue:
+    desc: 'Pretty-print Vue.js code with Prettier'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm format
+
+  fmt:check:
+    desc: 'Report unformatted files without writing them, both languages'
+    cmds:
+      # In sequence, so the two reports do not interleave.
+      - golangci-lint fmt --diff
+      - task: fmt:vue:check
+
+  fmt:vue:check:
+    desc: 'Report unformatted Vue.js files without writing them'
+    dir: '{{.ROOT_DIR}}/vue'
+    deps: [vue_deps]
+    cmds:
+      - pnpm format:check

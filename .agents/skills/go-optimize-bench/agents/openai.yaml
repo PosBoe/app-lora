@@ -1,0 +1,6 @@
+interface:
+  display_name: "Go Optimize From Benchmarks"
+  short_description: "Optimize Go code with benchstat proof"
+  default_prompt: "Use $go-optimize-bench to profile and measurably optimize this Go code."
+policy:
+  allow_implicit_invocation: false

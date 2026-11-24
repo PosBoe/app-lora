@@ -1,0 +1,22 @@
+# Local dependencies for development and tests. Start them with `task up`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lora
+      POSTGRES_PASSWORD: lora
+      POSTGRES_DB: lora_dev
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lora -d lora_dev']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+volumes:
+  pg_data:

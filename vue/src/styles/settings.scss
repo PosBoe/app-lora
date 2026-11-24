@@ -1,0 +1,8 @@
+// Vuetify SASS variables. https://vuetifyjs.com/features/sass-variables/
+//
+// $utilities: false turns off Vuetify's utility layer. A Vuetify layout,
+// spacing or typography class therefore produces no CSS. Use the UnoCSS
+// utilities instead.
+@forward 'vuetify/settings' with (
+  $utilities: false
+);
