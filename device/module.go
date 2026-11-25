@@ -14,9 +14,11 @@ var Module = fx.Module("device",
 	fx.Provide(
 		newDeviceService,
 		newModelService,
+		newGroupService,
 		newDeviceHandler,
 		newModelHandler,
+		newGroupHandler,
 		func(pool *pgxpool.Pool) *Stats { return newStats(pool) },
 	),
-	fx.Invoke(registerDeviceHandler, registerModelHandler),
+	fx.Invoke(registerDeviceHandler, registerModelHandler, registerGroupHandler),
 )

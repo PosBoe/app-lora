@@ -63,6 +63,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	mux := http.NewServeMux()
 	registerDeviceHandler(mux, &deviceHandler{devices: newDeviceService(pool, clk), guard: g})
 	registerModelHandler(mux, &modelHandler{models: newModelService(pool), guard: g})
+	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
 	return &testEnv{pool: pool, clock: clk, mux: mux, stats: newStats(pool)}
 }
 
@@ -145,4 +146,11 @@ func (e *testEnv) list(t *testing.T, orgID int64, query string) listResponse {
 
 func devicePath(id int64, suffix string) string {
 	return fmt.Sprintf("/api/v1/devices/%d%s", id, suffix)
+}
+
+// group creates a device group in orgID.
+func (e *testEnv) group(t *testing.T, orgID int64, name string) groupResponse {
+	t.Helper()
+	rec := e.do(t, orgID, http.MethodPost, "/api/v1/device-groups", groupRequest{Name: name})
+	return decode[groupResponse](t, rec, http.StatusCreated)
 }

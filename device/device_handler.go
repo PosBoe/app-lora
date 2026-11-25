@@ -36,16 +36,22 @@ func registerDeviceHandler(mux *http.ServeMux, h *deviceHandler) {
 // deviceResponse is a device. The frontend mirrors it in
 // vue/src/device/use-devices.ts.
 type deviceResponse struct {
-	ID          int64            `json:"id"`
-	DevEUI      string           `json:"dev_eui"`
-	Name        string           `json:"name"`
-	DeviceModel modelRefResponse `json:"device_model"`
-	MeterType   *string          `json:"meter_type"`
-	Address     *string          `json:"address"`
-	Note        *string          `json:"note"`
-	ArchivedAt  *time.Time       `json:"archived_at"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
+	ID          int64              `json:"id"`
+	DevEUI      string             `json:"dev_eui"`
+	Name        string             `json:"name"`
+	DeviceModel modelRefResponse   `json:"device_model"`
+	MeterType   *string            `json:"meter_type"`
+	Address     *string            `json:"address"`
+	Note        *string            `json:"note"`
+	ArchivedAt  *time.Time         `json:"archived_at"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	Groups      []groupRefResponse `json:"groups"`
+}
+
+type groupRefResponse struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type modelRefResponse struct {
@@ -55,7 +61,12 @@ type modelRefResponse struct {
 }
 
 func newDeviceResponse(d *device) deviceResponse {
+	groups := make([]groupRefResponse, len(d.Groups))
+	for i, g := range d.Groups {
+		groups[i] = groupRefResponse(g)
+	}
 	return deviceResponse{
+		Groups:      groups,
 		ID:          d.ID,
 		DevEUI:      d.DevEUI,
 		Name:        d.Name,
@@ -72,12 +83,13 @@ func newDeviceResponse(d *device) deviceResponse {
 // deviceRequest is the body of a create and of an update. An empty optional
 // field clears it.
 type deviceRequest struct {
-	DevEUI        string `json:"dev_eui"`
-	Name          string `json:"name"`
-	DeviceModelID int64  `json:"device_model_id"`
-	MeterType     string `json:"meter_type"`
-	Address       string `json:"address"`
-	Note          string `json:"note"`
+	DevEUI        string  `json:"dev_eui"`
+	Name          string  `json:"name"`
+	DeviceModelID int64   `json:"device_model_id"`
+	MeterType     string  `json:"meter_type"`
+	Address       string  `json:"address"`
+	Note          string  `json:"note"`
+	GroupIDs      []int64 `json:"group_ids"`
 }
 
 func (r deviceRequest) fields() deviceFields {
@@ -106,7 +118,8 @@ func (h *deviceHandler) list(w http.ResponseWriter, req *http.Request, orgID int
 	return nil
 }
 
-// parseListQuery reads q, model_id, meter_type, archived, page, and per_page.
+// parseListQuery reads q, model_id, group_id, meter_type, archived, page, and
+// per_page.
 // A page or a size out of range falls back to the first page or the default
 // size.
 func parseListQuery(req *http.Request) (listQuery, error) {
@@ -118,6 +131,9 @@ func parseListQuery(req *http.Request) (listQuery, error) {
 	}
 	if id, err := strconv.ParseInt(v.Get("model_id"), 10, 64); err == nil && id > 0 {
 		q.ModelID = id
+	}
+	if id, err := strconv.ParseInt(v.Get("group_id"), 10, 64); err == nil && id > 0 {
+		q.GroupID = id
 	}
 	meterType, err := normalizeMeterType(v.Get("meter_type"))
 	if err != nil {

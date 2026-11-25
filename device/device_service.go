@@ -16,25 +16,49 @@ const maxBulkIDs = 1000
 // deviceService holds the rules of the devices of an organization. Every
 // method takes the organization of the caller, never one from the request.
 type deviceService struct {
+	pool    *pgxpool.Pool
 	devices *deviceRepo
+	groups  *groupRepo
 	clock   clock.Clock
 }
 
 func newDeviceService(pool *pgxpool.Pool, clk clock.Clock) *deviceService {
-	return &deviceService{devices: newDeviceRepo(pool), clock: clk}
+	return &deviceService{
+		pool:    pool,
+		devices: newDeviceRepo(pool),
+		groups:  newGroupRepo(pool),
+		clock:   clk,
+	}
 }
 
-// create adds a device to the organization.
+// create adds a device to the organization with its groups, in one
+// transaction.
 func (s *deviceService) create(ctx context.Context, orgID int64, f deviceFields) (*device, error) {
 	f, err := f.normalize()
 	if err != nil {
 		return nil, err
 	}
-	id, err := s.devices.insert(ctx, orgID, f)
+	var id int64
+	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		var err error
+		if id, err = newDeviceRepo(tx).insert(ctx, orgID, f); err != nil {
+			return err
+		}
+		return setGroups(ctx, tx, orgID, id, f.GroupIDs)
+	})
 	if err != nil {
 		return nil, s.writeError(ctx, orgID, f.DevEUI, err)
 	}
-	return s.devices.selectByID(ctx, orgID, id)
+	return s.get(ctx, orgID, id)
+}
+
+// setGroups makes groupIDs the groups of a device in tx.
+func setGroups(ctx context.Context, tx pgx.Tx, orgID, deviceID int64, groupIDs []int64) error {
+	err := newGroupRepo(tx).setForDevice(ctx, orgID, deviceID, groupIDs)
+	if errors.Is(err, errReferenced) {
+		return errGroupNotFound
+	}
+	return err
 }
 
 // update writes the fields of a device. The DevEUI changes only while the
@@ -59,14 +83,19 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 		}
 	}
 
-	err = s.devices.update(ctx, orgID, id, f, s.clock.Now())
+	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		if err := newDeviceRepo(tx).update(ctx, orgID, id, f, s.clock.Now()); err != nil {
+			return err
+		}
+		return setGroups(ctx, tx, orgID, id, f.GroupIDs)
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
 	if err != nil {
 		return nil, s.writeError(ctx, orgID, f.DevEUI, err)
 	}
-	return s.devices.selectByID(ctx, orgID, id)
+	return s.get(ctx, orgID, id)
 }
 
 // hasUplinks reports whether a device has an uplink. The ingestion of
@@ -92,18 +121,53 @@ func (s *deviceService) writeError(ctx context.Context, orgID int64, devEUI stri
 	return err
 }
 
-// get returns a device of the organization, or errNotFound.
+// get returns a device of the organization with its groups, or
+// errNotFound.
 func (s *deviceService) get(ctx context.Context, orgID, id int64) (*device, error) {
 	d, err := s.devices.selectByID(ctx, orgID, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
 	}
-	return d, err
+	if err != nil {
+		return nil, err
+	}
+	if err := s.fillGroups(ctx, orgID, []*device{d}); err != nil {
+		return nil, err
+	}
+	return d, nil
 }
 
-// list returns a page of devices and the number of devices on all pages.
+// list returns a page of devices with their groups, and the number of
+// devices on all pages.
 func (s *deviceService) list(ctx context.Context, orgID int64, q listQuery) ([]*device, int, error) {
-	return s.devices.list(ctx, orgID, q)
+	devices, total, err := s.devices.list(ctx, orgID, q)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := s.fillGroups(ctx, orgID, devices); err != nil {
+		return nil, 0, err
+	}
+	return devices, total, nil
+}
+
+// fillGroups sets the Groups of each device with one query. It mutates the
+// devices.
+func (s *deviceService) fillGroups(ctx context.Context, orgID int64, devices []*device) error {
+	if len(devices) == 0 {
+		return nil
+	}
+	ids := make([]int64, len(devices))
+	for i, d := range devices {
+		ids[i] = d.ID
+	}
+	byDevice, err := s.groups.byDevice(ctx, orgID, ids)
+	if err != nil {
+		return err
+	}
+	for _, d := range devices {
+		d.Groups = byDevice[d.ID]
+	}
+	return nil
 }
 
 // archive archives the devices with ids. Ids of other organizations and

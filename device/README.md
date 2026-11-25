@@ -10,11 +10,13 @@ terms, and `DESIGN.md` states the goals and the decisions.
 | `fields.go`         | The DevEUI rule, the meter types, the field rules, the search pattern.  |
 | `device_service.go` | Create, update, list, archive, and restore devices.                     |
 | `model_service.go`  | Create, list, rename, and delete device models.                         |
+| `group_service.go`  | Create, list, rename, and delete device groups; add and remove devices. |
 | `device_handler.go` | `/api/v1/devices*`.                                                     |
 | `model_handler.go`  | `/api/v1/device-models*`.                                               |
+| `group_handler.go`  | `/api/v1/device-groups*`.                                               |
 | `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
 | `errors.go`         | The rule errors and their HTTP status.                                  |
-| `*_repo.go`         | The SQL of the `device_models` and `devices` tables.                    |
+| `*_repo.go`         | The SQL of the device, device model, and device group tables.           |
 
 ## The organization of a request
 
@@ -39,6 +41,14 @@ A test uses a guard that puts a caller in the context with `core.ContextWithCall
 A device uses a device model of its own organization. The foreign key
 `(organization_id, device_model_id)` holds this rule in the database. A device model that a
 device uses, also an archived device, cannot be deleted.
+
+## Device groups
+
+A device is in zero or more device groups, whatever its device model. The membership table has
+the keys `(organization_id, group_id)` and `(organization_id, device_id)`, so a membership never
+joins a device and a group of two organizations. A create or an update of a device sets its
+groups in the same transaction. A bulk add or remove ignores the ids of other organizations,
+but a group of another organization answers 404. A deleted group leaves its devices.
 
 ## Search
 

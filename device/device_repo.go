@@ -23,6 +23,8 @@ type device struct {
 	ArchivedAt    *time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	// Groups is filled by the service, not by the device queries.
+	Groups []groupRef
 }
 
 // listQuery selects a page of the devices of an organization.
@@ -30,6 +32,7 @@ type listQuery struct {
 	// Pattern is a LIKE pattern on the search column, or "" for no search.
 	Pattern   string
 	ModelID   int64
+	GroupID   int64
 	MeterType string
 	Archived  bool
 	Limit     int
@@ -120,14 +123,10 @@ func (r *deviceRepo) list(ctx context.Context, orgID int64, q listQuery) ([]*dev
 	rows, err := r.q.Query(ctx, `
 		SELECT `+deviceColumns+`, count(*) OVER ()
 		FROM `+deviceFrom+`
-		WHERE d.organization_id = $1
-			AND (d.archived_at IS NOT NULL) = $2
-			AND ($3 = '' OR d.search LIKE $3)
-			AND ($4 = 0 OR d.device_model_id = $4)
-			AND ($5 = '' OR d.meter_type = $5)
+		WHERE `+listWhere+`
 		ORDER BY lower(d.name), d.id
-		LIMIT $6 OFFSET $7`,
-		orgID, q.Archived, q.Pattern, q.ModelID, q.MeterType, q.Limit, q.Offset)
+		LIMIT $7 OFFSET $8`,
+		orgID, q.Archived, q.Pattern, q.ModelID, q.MeterType, q.GroupID, q.Limit, q.Offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -147,16 +146,22 @@ func (r *deviceRepo) list(ctx context.Context, orgID int64, q listQuery) ([]*dev
 
 func (r *deviceRepo) count(ctx context.Context, orgID int64, q listQuery) (int, error) {
 	var n int
-	err := r.q.QueryRow(ctx, `
-		SELECT count(*) FROM devices d
-		WHERE d.organization_id = $1
-			AND (d.archived_at IS NOT NULL) = $2
-			AND ($3 = '' OR d.search LIKE $3)
-			AND ($4 = 0 OR d.device_model_id = $4)
-			AND ($5 = '' OR d.meter_type = $5)`,
-		orgID, q.Archived, q.Pattern, q.ModelID, q.MeterType).Scan(&n)
+	err := r.q.QueryRow(ctx, `SELECT count(*) FROM devices d WHERE `+listWhere,
+		orgID, q.Archived, q.Pattern, q.ModelID, q.MeterType, q.GroupID).Scan(&n)
 	return n, err
 }
+
+// listWhere is the filter of list and count. Its parameters are $1 the
+// organization, $2 archived, $3 the search pattern, $4 the model, $5 the
+// meter type, and $6 the group. A zero or empty value does not filter.
+const listWhere = `d.organization_id = $1
+	AND (d.archived_at IS NOT NULL) = $2
+	AND ($3 = '' OR d.search LIKE $3)
+	AND ($4 = 0 OR d.device_model_id = $4)
+	AND ($5 = '' OR d.meter_type = $5)
+	AND ($6 = 0 OR EXISTS (
+		SELECT 1 FROM device_group_members gm
+		WHERE gm.organization_id = d.organization_id AND gm.device_id = d.id AND gm.group_id = $6))`
 
 // setArchived archives the devices with ids at the time at, or restores them
 // when at is nil. It changes only devices of the organization whose state

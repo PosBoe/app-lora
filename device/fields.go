@@ -64,10 +64,29 @@ type deviceFields struct {
 	MeterType     string
 	Address       string
 	Note          string
+	// GroupIDs are the groups of the device. A create or an update sets
+	// exactly these.
+	GroupIDs []int64
 }
 
-// normalize trims the fields and checks the rules. It returns a copy.
+// normalize trims the fields and checks the rules of a device that a user
+// writes in the UI. It returns a copy.
 func (f deviceFields) normalize() (deviceFields, error) {
+	f, err := f.normalizeOwn()
+	if err != nil {
+		return f, err
+	}
+	if f.DeviceModelID <= 0 {
+		return f, errModelNotFound
+	}
+	f.GroupIDs = uniqueIDs(f.GroupIDs)
+	return f, nil
+}
+
+// normalizeOwn checks the fields that a device holds itself, without its
+// device model and groups. A CSV row names those, so the import checks them
+// in its own way.
+func (f deviceFields) normalizeOwn() (deviceFields, error) {
 	var err error
 	if f.DevEUI, err = normalizeDevEUI(f.DevEUI); err != nil {
 		return f, err
@@ -78,9 +97,6 @@ func (f deviceFields) normalize() (deviceFields, error) {
 		return f, errNameRequired
 	case utf8.RuneCountInString(f.Name) > maxNameChars:
 		return f, errNameTooLong
-	}
-	if f.DeviceModelID <= 0 {
-		return f, errModelNotFound
 	}
 	if f.MeterType, err = normalizeMeterType(f.MeterType); err != nil {
 		return f, err
@@ -94,6 +110,20 @@ func (f deviceFields) normalize() (deviceFields, error) {
 		return f, errNoteTooLong
 	}
 	return f, nil
+}
+
+// uniqueIDs drops the ids that are not positive and the repeats, and keeps
+// the order. It returns an empty slice, never nil, for SQL arrays.
+func uniqueIDs(ids []int64) []int64 {
+	out := make([]int64, 0, len(ids))
+	seen := make(map[int64]bool, len(ids))
+	for _, id := range ids {
+		if id > 0 && !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // normalizeModel trims a vendor and a model name and checks the rules.
