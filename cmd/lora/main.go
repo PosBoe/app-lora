@@ -11,6 +11,7 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/waneock/app-lora/bootstrap"
+	"github.com/waneock/app-lora/cmd/admin"
 	"github.com/waneock/app-lora/cmd/migrate"
 	"github.com/waneock/app-lora/cmd/pg"
 	"github.com/waneock/app-lora/cmd/serve"
@@ -29,6 +30,7 @@ func run() int {
 	root := bootstrap.NewCLI([]*cli.Command{
 		serve.Command(),
 		migrate.Command(),
+		admin.Command(),
 		pg.Command(),
 		{
 			Name:  "version",

@@ -59,6 +59,7 @@ The binary is `cmd/lora`:
 | `lora serve` | Runs the HTTP server: the API under `/api/v1/`, and the SPA when built with `-tags=vue`. |
 | `lora migrate up\|down\|status\|create` | Manages the PostgreSQL migrations in `cmd/lora/migrations`. |
 | `lora pg create_db\|drop_db\|ping` | Manages the configured database. |
+| `lora admin create --login <login>` | Creates an admin and prints its temporary password one time. |
 | `lora version` | Prints the version. |
 
 `task build` builds `vue/dist` and then `./bin/lora` with the frontend embedded.
@@ -68,6 +69,7 @@ The binary is `cmd/lora`:
 - `task test` — `go vet`, the Go tests with `-short`, and the frontend unit tests. Run it before
   a PR.
 - `task test:setup` — creates the migrated `lora_test` database for integration tests.
+- `task test:full` — every Go test without `-short`, also the tests that use the test database.
 - `task lint`, `task fmt` — linters and formatters for both languages.
 
 ## Directory map
@@ -75,10 +77,12 @@ The binary is `cmd/lora`:
 | Path | Content |
 | --- | --- |
 | `cmd/lora/` | The binary's `main` and the migrations. |
-| `cmd/serve/`, `cmd/migrate/`, `cmd/pg/` | CLI command groups. |
+| `cmd/serve/`, `cmd/migrate/`, `cmd/pg/`, `cmd/admin/` | CLI command groups. |
 | `bootstrap/` | CLI root, config loading, logging, the fx application. |
 | `system/` | Health endpoint; the reference shape of a domain package. |
-| `pkg/` | Shared, domain-free packages: `appconf`, `pgdb`, `datadriven`, `featflag`, `version`. |
+| `core/` | Organizations, users, the admin, logins, and sessions. See `core/README.md`. |
+| `device/` | The device context. It holds its glossary and design; it has no code yet. |
+| `pkg/` | Shared, domain-free packages, for example `appconf`, `pgdb`, `httpkit`, `clock`, `pgtest`. |
 | `config/` | `*.default.yml` templates; `task init` copies them. |
 | `vue/` | The frontend. See `vue/README.md`. |
 | `docs/` | Shared guides for Go, the frontend, and agent workflows. |

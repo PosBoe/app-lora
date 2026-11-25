@@ -17,6 +17,6 @@ If a domain package needs something from here, move that thing down to `pkg/`.
 - A **long-lived** command (a server, a worker) calls `bootstrap.Serve(ctx, cmd, modules...)`.
   `cmd/serve/serve.go` is the pattern; its `Modules()` is the assembly.
 - A **one-shot** command that needs only the config and a connection boots no fx application. It
-  calls `bootstrap.LoadConfig(cmd)` and opens what it needs. `cmd/migrate` and `cmd/pg` do this.
+  calls `bootstrap.LoadConfig(cmd)` and opens what it needs. `cmd/migrate`, `cmd/pg`, and `cmd/admin` do this.
 
 The config path comes from `--config`, or `LORA_CONFIG`, or `config/dev.yml` by default.
