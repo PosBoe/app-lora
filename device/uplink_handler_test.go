@@ -118,6 +118,12 @@ func TestUnmatchedAndAttach(t *testing.T) {
 		assert.Len(t, uplinks(t, d.ID, "?page=2").Uplinks, 1)
 	})
 
+	t.Run("stats give the last uplink of the organization", func(t *testing.T) {
+		last, err := newStats(env.pool).LastUplinkByOrganization(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, env.clock.Now(), last[org].UTC(), "the arrival time of the newest uplink")
+	})
+
 	t.Run("a device of another organization is not found", func(t *testing.T) {
 		d := env.device(t, org, deviceRequest{DevEUI: randomDevEUI(), Name: "mine", DeviceModelID: m.ID})
 		other := env.organization(t)

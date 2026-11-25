@@ -19,6 +19,7 @@ export interface Organization {
   deactivated_at: string | null
   created_at: string
   device_count: number
+  last_uplink_at: string | null
   users: Member[]
 }
 

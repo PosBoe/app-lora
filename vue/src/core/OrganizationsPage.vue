@@ -18,6 +18,7 @@ const headers = computed(() => [
   { title: t('organizations.profile'), key: 'profile', sortable: false },
   { title: t('organizations.lastLogin'), key: 'last_login', sortable: false },
   { title: t('organizations.devices'), key: 'device_count', align: 'end' as const },
+  { title: t('organizations.lastUplink'), key: 'last_uplink', sortable: false },
   { title: t('organizations.created'), key: 'created_at' },
   { title: t('organizations.actions'), key: 'actions', sortable: false, align: 'end' as const },
 ])
@@ -199,6 +200,12 @@ async function confirm() {
 
         <template #[`item.last_login`]="{ item }">
           <span class="text-muted">{{ time(firstUser(item)?.last_login_at ?? null) }}</span>
+        </template>
+
+        <template #[`item.last_uplink`]="{ item }">
+          <span class="text-muted">{{
+            item.last_uplink_at ? time(item.last_uplink_at) : '—'
+          }}</span>
         </template>
 
         <template #[`item.created_at`]="{ item }">

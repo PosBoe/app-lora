@@ -18,6 +18,7 @@ const active: Organization = {
   deactivated_at: null,
   created_at: '2026-11-25T10:00:00Z',
   device_count: 12,
+  last_uplink_at: '2026-11-25T11:30:00Z',
   users: [
     {
       id: 10,
@@ -38,6 +39,7 @@ const deactivated: Organization = {
   deactivated_at: '2026-11-25T12:00:00Z',
   created_at: '2026-11-24T10:00:00Z',
   device_count: 0,
+  last_uplink_at: null,
   users: [
     {
       id: 20,

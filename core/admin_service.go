@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,13 +17,15 @@ type organizationMembers struct {
 	organization *organization
 	users        []*user
 	deviceCount  int
+	lastUplinkAt *time.Time
 }
 
-// DeviceCounter counts the devices of each organization. The device context
-// implements it; the composition root binds it, so core does not import the
-// device context.
-type DeviceCounter interface {
+// DeviceStats sums up the devices and the uplinks of each organization. The
+// device context implements it; the composition root binds it, so core does
+// not import the device context.
+type DeviceStats interface {
 	DevicesByOrganization(ctx context.Context) (map[int64]int, error)
+	LastUplinkByOrganization(ctx context.Context) (map[int64]time.Time, error)
 }
 
 // adminService holds what the admin does to organizations and their users.
@@ -30,10 +33,10 @@ type adminService struct {
 	pool      *pgxpool.Pool
 	passwords *passwords
 	clock     clock.Clock
-	devices   DeviceCounter
+	devices   DeviceStats
 }
 
-func newAdminService(pool *pgxpool.Pool, pw *passwords, clk clock.Clock, devices DeviceCounter) *adminService {
+func newAdminService(pool *pgxpool.Pool, pw *passwords, clk clock.Clock, devices DeviceStats) *adminService {
 	return &adminService{pool: pool, passwords: pw, clock: clk, devices: devices}
 }
 
@@ -132,7 +135,8 @@ func (s *adminService) reactivate(ctx context.Context, organizationID int64) err
 }
 
 // listOrganizations returns all organizations, the newest first, each with
-// its users and the number of its devices that are not archived.
+// its users, the number of its devices that are not archived, and the time of
+// its last uplink.
 func (s *adminService) listOrganizations(ctx context.Context) ([]*organizationMembers, error) {
 	orgs, err := newOrganizationRepo(s.pool).list(ctx)
 	if err != nil {
@@ -151,10 +155,18 @@ func (s *adminService) listOrganizations(ctx context.Context) ([]*organizationMe
 	if err != nil {
 		return nil, err
 	}
+	lastUplinks, err := s.devices.LastUplinkByOrganization(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]*organizationMembers, len(orgs))
 	for i, org := range orgs {
-		out[i] = &organizationMembers{organization: org, users: byOrg[org.ID], deviceCount: counts[org.ID]}
+		om := &organizationMembers{organization: org, users: byOrg[org.ID], deviceCount: counts[org.ID]}
+		if at, ok := lastUplinks[org.ID]; ok {
+			om.lastUplinkAt = &at
+		}
+		out[i] = om
 	}
 	return out, nil
 }

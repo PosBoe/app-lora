@@ -2,13 +2,14 @@ package device
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/waneock/app-lora/pkg/pgdb"
 )
 
-// Stats counts devices for the admin views of the core context.
+// Stats sums up devices and uplinks for the admin views of the core context.
 type Stats struct {
 	q pgdb.Querier
 }
@@ -34,4 +35,21 @@ func (s *Stats) DevicesByOrganization(ctx context.Context) (map[int64]int, error
 		return nil
 	})
 	return counts, err
+}
+
+// LastUplinkByOrganization returns the arrival time of the newest uplink of
+// each organization that has one.
+func (s *Stats) LastUplinkByOrganization(ctx context.Context) (map[int64]time.Time, error) {
+	rows, err := s.q.Query(ctx, `SELECT organization_id, max(stored_at) FROM uplinks GROUP BY organization_id`)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[int64]time.Time)
+	var orgID int64
+	var at time.Time
+	_, err = pgx.ForEachRow(rows, []any{&orgID, &at}, func() error {
+		out[orgID] = at
+		return nil
+	})
+	return out, err
 }

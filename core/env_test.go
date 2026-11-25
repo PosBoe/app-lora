@@ -153,10 +153,14 @@ func (e *testEnv) guard() *Guard {
 	return newGuard(e.auth, conf, slog.New(slog.NewTextHandler(io.Discard, nil)))
 }
 
-// fixedCounts is a DeviceCounter with set counts. The device context tests
-// the real one.
+// fixedCounts is a DeviceStats with set device counts and no uplinks. The
+// device context tests the real one.
 type fixedCounts map[int64]int
 
 func (c fixedCounts) DevicesByOrganization(context.Context) (map[int64]int, error) {
 	return c, nil
+}
+
+func (c fixedCounts) LastUplinkByOrganization(context.Context) (map[int64]time.Time, error) {
+	return map[int64]time.Time{}, nil
 }

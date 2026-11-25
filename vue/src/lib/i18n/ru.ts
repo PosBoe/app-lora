@@ -151,6 +151,7 @@ export const ru: Messages = {
     never: 'Никогда',
     created: 'Создана',
     devices: 'Устройства',
+    lastUplink: 'Последний uplink',
     actions: 'Действия',
     resetPassword: 'Сбросить пароль',
     deactivate: 'Деактивировать',

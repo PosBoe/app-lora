@@ -150,6 +150,7 @@ export const ro = {
     never: 'Niciodată',
     created: 'Creată',
     devices: 'Device-uri',
+    lastUplink: 'Ultimul uplink',
     actions: 'Acțiuni',
     resetPassword: 'Resetează parola',
     deactivate: 'Dezactivează',
