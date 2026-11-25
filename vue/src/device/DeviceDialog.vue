@@ -16,9 +16,9 @@ import {
 
 // DeviceDialog adds a device, or edits `device` when it is set. It emits
 // `saved` with the device that the user saved or restored.
-// devEui fills the DevEUI of a new device, for example from the unmatched
-// warning.
-const props = defineProps<{ device?: Device; devEui?: string }>()
+// initialDevEui fills the DevEUI of a new device, for example from the
+// unmatched warning.
+const props = defineProps<{ device?: Device; initialDevEui?: string }>()
 
 const open = defineModel<boolean>({ required: true })
 
@@ -52,7 +52,7 @@ watch(
       return
     }
     const d = props.device
-    devEui.value = displayDevEUI(d?.dev_eui ?? props.devEui ?? '')
+    devEui.value = displayDevEUI(d?.dev_eui ?? props.initialDevEui ?? '')
     name.value = d?.name ?? ''
     modelId.value = d?.device_model.id ?? null
     meterType.value = d?.meter_type ?? null

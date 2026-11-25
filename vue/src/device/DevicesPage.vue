@@ -437,7 +437,7 @@ async function confirmArchive() {
       </v-data-table-server>
     </div>
 
-    <DeviceDialog v-model="addOpen" :dev-eui="addDevEui" @saved="onSaved" />
+    <DeviceDialog v-model="addOpen" :initial-dev-eui="addDevEui" @saved="onSaved" />
 
     <DeviceGroupDialog
       v-model="newGroupOpen"
