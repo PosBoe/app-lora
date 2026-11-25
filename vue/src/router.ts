@@ -52,6 +52,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { member: true },
   },
   {
+    path: '/integrations',
+    name: 'Integrations',
+    component: () => import('@/device/IntegrationsPage.vue'),
+    meta: { member: true },
+  },
+  {
     path: '/device-groups',
     name: 'DeviceGroups',
     component: () => import('@/device/DeviceGroupsPage.vue'),
