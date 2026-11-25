@@ -49,6 +49,11 @@ var (
 	errImportTooManyRows   = &ruleError{"import_too_many_rows", "the file has more than 5000 rows"}
 	errImportRetry         = &ruleError{"import_retry", "the data changed during the import; try again"}
 	errDuplicateInFile     = &ruleError{"duplicate_in_file", "an earlier row of the file has this DevEUI"}
+
+	errIntegrationNameRequired = &ruleError{"integration_name_required", "the integration name is required"}
+	errIntegrationNameTooLong  = &ruleError{"integration_name_too_long", "the integration name has at most 100 characters"}
+	errIntegrationKindInvalid  = &ruleError{"integration_kind_invalid", "the kind is chirpstack or ttn"}
+	errIntegrationNotFound     = &ruleError{"integration_not_found", "the integration is not in the organization"}
 )
 
 // ruleStatus is the HTTP status of each rule error that is not 400.
@@ -64,7 +69,9 @@ var ruleStatus = map[*ruleError]int{
 	errImportContentType: http.StatusUnsupportedMediaType,
 	errImportTooLarge:    http.StatusRequestEntityTooLarge,
 	errImportRetry:       http.StatusConflict,
-	errNotFound:          http.StatusNotFound,
+
+	errIntegrationNotFound: http.StatusNotFound,
+	errNotFound:            http.StatusNotFound,
 }
 
 // toHTTP turns a rule error into an *httpkit.Error. A rule error not in

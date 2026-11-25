@@ -66,6 +66,11 @@ func newTestEnv(t *testing.T) *testEnv {
 	registerModelHandler(mux, &modelHandler{models: newModelService(pool), guard: g})
 	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
 	registerImportHandler(mux, &importHandler{imports: newImportService(pool), guard: g})
+	registerIntegrationHandler(mux, &integrationHandler{
+		integrations: newIntegrationService(pool, clk),
+		guard:        g,
+		siteURL:      "https://lora.test",
+	})
 	return &testEnv{pool: pool, clock: clk, mux: mux, stats: newStats(pool)}
 }
 
@@ -166,4 +171,12 @@ func (e *testEnv) doCSV(t *testing.T, orgID int64, path, body string) *httptest.
 	rec := httptest.NewRecorder()
 	e.mux.ServeHTTP(rec, req)
 	return rec
+}
+
+// integration creates an integration in orgID and returns it with its
+// secret.
+func (e *testEnv) integration(t *testing.T, orgID int64, kind string) secretResponse {
+	t.Helper()
+	rec := e.do(t, orgID, http.MethodPost, "/api/v1/integrations", integrationRequest{Name: "NS " + kind, Kind: kind})
+	return decode[secretResponse](t, rec, http.StatusCreated)
 }
