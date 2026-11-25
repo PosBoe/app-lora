@@ -21,3 +21,21 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }) as MediaQueryList
 }
+
+// Vuetify places an open overlay (a dialog, a menu) against the visual
+// viewport.
+if (!window.visualViewport) {
+  Object.defineProperty(window, 'visualViewport', {
+    value: Object.assign(new EventTarget(), {
+      width: 1024,
+      height: 768,
+      offsetLeft: 0,
+      offsetTop: 0,
+      pageLeft: 0,
+      pageTop: 0,
+      scale: 1,
+      onresize: null,
+      onscroll: null,
+    }),
+  })
+}

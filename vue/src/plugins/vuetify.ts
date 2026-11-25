@@ -2,6 +2,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 
 import { createVuetify, type ThemeDefinition } from 'vuetify'
+import { ro, ru } from 'vuetify/locale'
 
 import { TOKENS, type ThemeName } from '@/lib/tokens'
 
@@ -22,6 +23,12 @@ function theme(name: ThemeName): ThemeDefinition {
 }
 
 export default createVuetify({
+  // useLanguage keeps the current locale equal to the vue-i18n locale.
+  locale: {
+    locale: 'ro',
+    fallback: 'ro',
+    messages: { ro, ru },
+  },
   theme: {
     defaultTheme: 'system',
     themes: {

@@ -4,12 +4,16 @@ The web frontend: Vue 3, TypeScript, Vuetify, and UnoCSS, built with Vite.
 
 | Path                        | Content                                                                             |
 | --------------------------- | ----------------------------------------------------------------------------------- |
-| `src/main.ts`               | Entry: installs Vuetify and the router, mounts `App.vue`.                           |
-| `src/router.ts`             | Routes. A module adds its pages here.                                               |
-| `src/plugins/vuetify.ts`    | The Vuetify instance and its themes, built from the tokens.                         |
+| `src/main.ts`               | Entry: installs vue-i18n, Vuetify and the router, mounts `App.vue`.                 |
+| `src/App.vue`               | The app bar: the menu, the language switch, and the user menu.                      |
+| `src/router.ts`             | Routes and the session guards. A module adds its pages here.                        |
+| `src/plugins/vuetify.ts`    | The Vuetify instance, its themes built from the tokens, and its locales.            |
+| `src/plugins/i18n.ts`       | The vue-i18n instance and the first UI language.                                    |
 | `src/lib/`                  | Plain TypeScript: `tokens.ts` (the look), `api.ts` (the HTTP client), `testing.ts`. |
+| `src/lib/i18n/`             | The Romanian and Russian messages; `ro.ts` is the schema `ru.ts` must match.        |
 | `src/use/`                  | Composables, auto-imported.                                                         |
 | `src/components/`           | Shared components, auto-imported by path.                                           |
+| `src/core/`                 | The core module: login, set password, home, and the admin organizations page.       |
 | `src/system/`               | The system module: the health page.                                                 |
 | `src/types/`                | Global type declarations.                                                           |
 | `packages.ts`               | The directories that auto-import scans.                                             |

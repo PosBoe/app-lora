@@ -11,10 +11,10 @@ import { autoImportDirs, componentDirs, excludeComponentNames } from './packages
 
 export default defineConfig({
   plugins: [
-    // Vue APIs, the router, VueUse and every composable in src/use are globals.
-    // Do not import them by hand.
+    // Vue APIs, the router, VueUse, vue-i18n and every composable in src/use
+    // are globals. Do not import them by hand.
     AutoImport({
-      imports: ['vue', 'vue-router', '@vueuse/core'],
+      imports: ['vue', 'vue-router', '@vueuse/core', 'vue-i18n'],
       dirs: autoImportDirs,
       dts: 'src/auto-imports.d.ts',
       vueTemplate: true,
