@@ -36,17 +36,18 @@ func registerDeviceHandler(mux *http.ServeMux, h *deviceHandler) {
 // deviceResponse is a device. The frontend mirrors it in
 // vue/src/device/use-devices.ts.
 type deviceResponse struct {
-	ID          int64              `json:"id"`
-	DevEUI      string             `json:"dev_eui"`
-	Name        string             `json:"name"`
-	DeviceModel modelRefResponse   `json:"device_model"`
-	MeterType   *string            `json:"meter_type"`
-	Address     *string            `json:"address"`
-	Note        *string            `json:"note"`
-	ArchivedAt  *time.Time         `json:"archived_at"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
-	Groups      []groupRefResponse `json:"groups"`
+	ID           int64              `json:"id"`
+	DevEUI       string             `json:"dev_eui"`
+	Name         string             `json:"name"`
+	DeviceModel  modelRefResponse   `json:"device_model"`
+	MeterType    *string            `json:"meter_type"`
+	Address      *string            `json:"address"`
+	Note         *string            `json:"note"`
+	ArchivedAt   *time.Time         `json:"archived_at"`
+	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+	LastUplinkAt *time.Time         `json:"last_uplink_at"`
+	Groups       []groupRefResponse `json:"groups"`
 }
 
 type groupRefResponse struct {
@@ -66,17 +67,18 @@ func newDeviceResponse(d *device) deviceResponse {
 		groups[i] = groupRefResponse(g)
 	}
 	return deviceResponse{
-		Groups:      groups,
-		ID:          d.ID,
-		DevEUI:      d.DevEUI,
-		Name:        d.Name,
-		DeviceModel: modelRefResponse{ID: d.DeviceModelID, Vendor: d.Vendor, Model: d.Model},
-		MeterType:   d.MeterType,
-		Address:     d.Address,
-		Note:        d.Note,
-		ArchivedAt:  d.ArchivedAt,
-		CreatedAt:   d.CreatedAt,
-		UpdatedAt:   d.UpdatedAt,
+		Groups:       groups,
+		ID:           d.ID,
+		DevEUI:       d.DevEUI,
+		Name:         d.Name,
+		DeviceModel:  modelRefResponse{ID: d.DeviceModelID, Vendor: d.Vendor, Model: d.Model},
+		MeterType:    d.MeterType,
+		Address:      d.Address,
+		Note:         d.Note,
+		ArchivedAt:   d.ArchivedAt,
+		CreatedAt:    d.CreatedAt,
+		UpdatedAt:    d.UpdatedAt,
+		LastUplinkAt: d.LastUplinkAt,
 	}
 }
 

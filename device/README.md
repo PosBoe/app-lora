@@ -17,6 +17,10 @@ terms, and `DESIGN.md` states the goals and the decisions.
 | `model_handler.go`  | `/api/v1/device-models*`.                                               |
 | `group_handler.go`  | `/api/v1/device-groups*`.                                               |
 | `import_handler.go` | `/api/v1/devices/import*` and the template file.                        |
+| `integration_*.go`  | Integrations: secrets, status, `/api/v1/integrations*`.                 |
+| `ingest_*.go`       | `/api/v1/ingest/*`: the public routes, the ChirpStack and TTN parsers.  |
+| `uplink_*.go`       | Uplinks: store, attach, the device table, `/api/v1/unmatched`.          |
+| `purge.go`          | The hourly delete of unmatched uplinks older than 30 days.              |
 | `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
 | `errors.go`         | The rule errors and their HTTP status.                                  |
 | `*_repo.go`         | The SQL of the device, device model, and device group tables.           |
@@ -74,6 +78,28 @@ column or remove an accepted value.
 `POST /api/v1/devices/import/preview` plans and changes nothing. `POST /api/v1/devices/import`
 plans again and creates the new rows, the missing device models, and the missing groups in one
 transaction. Both take the file as a text/csv body, which an HTML form cannot send.
+
+## Ingestion
+
+- A network server posts to `/api/v1/ingest/chirpstack` or `/api/v1/ingest/ttn` with
+  `Authorization: Bearer <secret>`. The secret names the integration, and the integration names
+  the organization (`DESIGN.md` D1, D2). The routes take no session.
+- A secret is `lora_` and 32 random bytes in base64url. The table holds only its SHA-256, so the
+  secret shows one time. A new secret ends the old one at once.
+- An unknown secret answers 401 and is not recorded: it names no organization. A request that
+  ingestion cannot read (the wrong route, Protobuf from ChirpStack, bad JSON, a bad DevEUI or
+  payload) answers 400 and becomes the last error of the integration, which its page shows. A
+  message that is not an uplink answers 204, so the network server does not send it again. A
+  failed store answers 500, so the network server can send it again.
+- An uplink lands on the live device with its DevEUI in the organization. With no such device,
+  or with an archived one, it is unmatched. The unique key `(organization_id, dev_eui, f_cnt,
+  received_at)` keeps one copy of an uplink that a network server sends again.
+- A create, an import, a restore, and a DevEUI change give the device the unmatched uplinks
+  with its DevEUI, in the same transaction. The purge deletes unmatched uplinks 30 days after
+  they arrive. The uplinks of a device are never deleted.
+- The DevEUI of a device with an uplink cannot change (`hasUplinks`).
+- `testdata/` holds sample bodies of both network servers. They are the evidence of the frozen
+  formats F1 and F2.
 
 ## Search
 

@@ -67,6 +67,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
 	registerImportHandler(mux, &importHandler{imports: newImportService(pool), guard: g})
 	registerIngestHandler(mux, newIngestHandler(newIngestService(pool, clk), g.logger))
+	registerUplinkHandler(mux, &uplinkHandler{devices: newDeviceService(pool, clk), uplinks: newUplinkRepo(pool), guard: g})
 	registerIntegrationHandler(mux, &integrationHandler{
 		integrations: newIntegrationService(pool, clk),
 		guard:        g,

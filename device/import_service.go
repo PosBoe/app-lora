@@ -212,6 +212,9 @@ func createDevices(ctx context.Context, tx pgx.Tx, orgID int64, p *importPlan) e
 	if err != nil {
 		return err
 	}
+	if err := attachImported(ctx, tx, orgID, ids); err != nil {
+		return err
+	}
 
 	var groupIDs, deviceIDs []int64
 	for i := range p.creates {
@@ -225,4 +228,16 @@ func createDevices(ctx context.Context, tx pgx.Tx, orgID int64, p *importPlan) e
 		return nil
 	}
 	return newGroupRepo(tx).addPairs(ctx, orgID, groupIDs, deviceIDs)
+}
+
+// attachImported gives each new device the unmatched uplinks with its
+// DevEUI (device:G8).
+func attachImported(ctx context.Context, tx pgx.Tx, orgID int64, ids map[string]int64) error {
+	deviceIDs := make([]int64, 0, len(ids))
+	devEUIs := make([]string, 0, len(ids))
+	for eui, id := range ids {
+		deviceIDs = append(deviceIDs, id)
+		devEUIs = append(devEUIs, eui)
+	}
+	return newUplinkRepo(tx).attachMany(ctx, orgID, deviceIDs, devEUIs)
 }

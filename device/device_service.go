@@ -19,6 +19,7 @@ type deviceService struct {
 	pool    *pgxpool.Pool
 	devices *deviceRepo
 	groups  *groupRepo
+	uplinks *uplinkRepo
 	clock   clock.Clock
 }
 
@@ -27,12 +28,14 @@ func newDeviceService(pool *pgxpool.Pool, clk clock.Clock) *deviceService {
 		pool:    pool,
 		devices: newDeviceRepo(pool),
 		groups:  newGroupRepo(pool),
+		uplinks: newUplinkRepo(pool),
 		clock:   clk,
 	}
 }
 
 // create adds a device to the organization with its groups, in one
-// transaction.
+// transaction. The device gets the unmatched uplinks with its DevEUI
+// (device:G8).
 func (s *deviceService) create(ctx context.Context, orgID int64, f deviceFields) (*device, error) {
 	f, err := f.normalize()
 	if err != nil {
@@ -44,7 +47,11 @@ func (s *deviceService) create(ctx context.Context, orgID int64, f deviceFields)
 		if id, err = newDeviceRepo(tx).insert(ctx, orgID, f); err != nil {
 			return err
 		}
-		return setGroups(ctx, tx, orgID, id, f.GroupIDs)
+		if err := setGroups(ctx, tx, orgID, id, f.GroupIDs); err != nil {
+			return err
+		}
+		_, err = newUplinkRepo(tx).attach(ctx, orgID, id, f.DevEUI)
+		return err
 	})
 	if err != nil {
 		return nil, s.writeError(ctx, orgID, f.DevEUI, err)
@@ -87,7 +94,14 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 		if err := newDeviceRepo(tx).update(ctx, orgID, id, f, s.clock.Now()); err != nil {
 			return err
 		}
-		return setGroups(ctx, tx, orgID, id, f.GroupIDs)
+		if err := setGroups(ctx, tx, orgID, id, f.GroupIDs); err != nil {
+			return err
+		}
+		if f.DevEUI == current.DevEUI || current.ArchivedAt != nil {
+			return nil
+		}
+		_, err := newUplinkRepo(tx).attach(ctx, orgID, id, f.DevEUI)
+		return err
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errNotFound
@@ -98,10 +112,9 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 	return s.get(ctx, orgID, id)
 }
 
-// hasUplinks reports whether a device has an uplink. The ingestion of
-// uplinks does not exist yet, so no device has one.
-func (s *deviceService) hasUplinks(context.Context, int64, int64) (bool, error) {
-	return false, nil
+// hasUplinks reports whether a device has an uplink.
+func (s *deviceService) hasUplinks(ctx context.Context, orgID, id int64) (bool, error) {
+	return s.uplinks.hasAny(ctx, orgID, id)
 }
 
 // writeError turns a constraint error of an insert or an update into a rule
@@ -181,11 +194,20 @@ func (s *deviceService) archive(ctx context.Context, orgID int64, ids []int64) (
 	return s.devices.setArchived(ctx, orgID, ids, &now)
 }
 
-// restore takes a device out of the archive.
+// restore takes a device out of the archive with the unmatched uplinks of
+// its DevEUI.
 func (s *deviceService) restore(ctx context.Context, orgID, id int64) error {
-	if _, err := s.get(ctx, orgID, id); err != nil {
+	d, err := s.get(ctx, orgID, id)
+	if err != nil {
 		return err
 	}
-	_, err := s.devices.setArchived(ctx, orgID, []int64{id}, nil)
-	return err
+	return pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		if _, err := newDeviceRepo(tx).setArchived(ctx, orgID, []int64{id}, nil); err != nil {
+			return err
+		}
+		// The uplinks that arrived while the device was archived are
+		// unmatched; the restored device takes them back.
+		_, err := newUplinkRepo(tx).attach(ctx, orgID, id, d.DevEUI)
+		return err
+	})
 }
