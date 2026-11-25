@@ -168,3 +168,13 @@ func (r *groupRepo) byDevice(ctx context.Context, orgID int64, deviceIDs []int64
 	})
 	return out, err
 }
+
+// addPairs puts each device of deviceIDs in the group at the same position of
+// groupIDs. The ids must be of the organization.
+func (r *groupRepo) addPairs(ctx context.Context, orgID int64, groupIDs, deviceIDs []int64) error {
+	_, err := r.q.Exec(ctx, `
+		INSERT INTO device_group_members (organization_id, group_id, device_id)
+		SELECT $1, g, d FROM unnest($2::bigint[], $3::bigint[]) AS u(g, d)
+		ON CONFLICT DO NOTHING`, orgID, groupIDs, deviceIDs)
+	return pgSentinel(err)
+}

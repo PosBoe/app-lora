@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -64,6 +65,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	registerDeviceHandler(mux, &deviceHandler{devices: newDeviceService(pool, clk), guard: g})
 	registerModelHandler(mux, &modelHandler{models: newModelService(pool), guard: g})
 	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
+	registerImportHandler(mux, &importHandler{imports: newImportService(pool), guard: g})
 	return &testEnv{pool: pool, clock: clk, mux: mux, stats: newStats(pool)}
 }
 
@@ -153,4 +155,15 @@ func (e *testEnv) group(t *testing.T, orgID int64, name string) groupResponse {
 	t.Helper()
 	rec := e.do(t, orgID, http.MethodPost, "/api/v1/device-groups", groupRequest{Name: name})
 	return decode[groupResponse](t, rec, http.StatusCreated)
+}
+
+// doCSV sends a CSV body as a member of orgID.
+func (e *testEnv) doCSV(t *testing.T, orgID int64, path, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+	req.Header.Set("Content-Type", "text/csv")
+	req.Header.Set(orgHeader, strconv.FormatInt(orgID, 10))
+	rec := httptest.NewRecorder()
+	e.mux.ServeHTTP(rec, req)
+	return rec
 }

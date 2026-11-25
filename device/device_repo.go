@@ -177,3 +177,52 @@ func (r *deviceRepo) setArchived(ctx context.Context, orgID int64, ids []int64, 
 	}
 	return tag.RowsAffected(), nil
 }
+
+// existingDevEUIs returns the DevEUIs of devEUIs that the organization has,
+// archived devices too.
+func (r *deviceRepo) existingDevEUIs(ctx context.Context, orgID int64, devEUIs []string) (map[string]bool, error) {
+	rows, err := r.q.Query(ctx, `
+		SELECT dev_eui FROM devices WHERE organization_id = $1 AND dev_eui = ANY($2)`,
+		orgID, devEUIs)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]bool)
+	var eui string
+	_, err = pgx.ForEachRow(rows, []any{&eui}, func() error {
+		out[eui] = true
+		return nil
+	})
+	return out, err
+}
+
+// insertMany creates devices with one statement and returns the id of each
+// DevEUI. The fields must be normalized and the models of the organization.
+// It returns errDuplicate when the organization has one of the DevEUIs.
+func (r *deviceRepo) insertMany(ctx context.Context, orgID int64, fields []deviceFields) (map[string]int64, error) {
+	n := len(fields)
+	euis, names, types, addresses, notes := make([]string, n), make([]string, n), make([]string, n), make([]string, n), make([]string, n)
+	models := make([]int64, n)
+	for i, f := range fields {
+		euis[i], names[i], models[i] = f.DevEUI, f.Name, f.DeviceModelID
+		types[i], addresses[i], notes[i] = f.MeterType, f.Address, f.Note
+	}
+	rows, err := r.q.Query(ctx, `
+		INSERT INTO devices (organization_id, dev_eui, name, device_model_id, meter_type, address, note)
+		SELECT $1, e, n, m, nullif(t, ''), nullif(a, ''), nullif(o, '')
+		FROM unnest($2::text[], $3::text[], $4::bigint[], $5::text[], $6::text[], $7::text[])
+			AS u(e, n, m, t, a, o)
+		RETURNING id, dev_eui`,
+		orgID, euis, names, models, types, addresses, notes)
+	if err != nil {
+		return nil, pgSentinel(err)
+	}
+	ids := make(map[string]int64, n)
+	var id int64
+	var eui string
+	_, err = pgx.ForEachRow(rows, []any{&id, &eui}, func() error {
+		ids[eui] = id
+		return nil
+	})
+	return ids, pgSentinel(err)
+}

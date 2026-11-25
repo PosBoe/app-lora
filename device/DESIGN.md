@@ -172,6 +172,14 @@ without it.
   A break costs: the uplinks of each organization on TTN stop arriving.
   Evidence: none
 
+- **F3** — The device CSV file: the header names `dev_eui`, `name`, `vendor`, `model`, `type`,
+  `address`, `note`, `groups`; the `type` values `water`, `gas`, `apă`, `apa`, `gaz`, `вода`,
+  `газ`; `;` between group names; `,` or `;` between cells.
+  Frozen by: the files that client companies keep and fill in again for each import.
+  A break costs: a kept file is refused, or its rows lose a field, with no change on the
+  client side.
+  Evidence: `device/import_test.go:TestParseCSV`
+
 ## Decisions
 
 - **D1 — Take the organization from the integration, not from the DevEUI** — reopens when one

@@ -38,6 +38,17 @@ var (
 	errGroupTaken        = &ruleError{"group_taken", "the organization has a group with this name"}
 	errGroupNotFound     = &ruleError{"group_not_found", "the group is not in the organization"}
 	errNotFound          = &ruleError{"not_found", "not found"}
+
+	errImportContentType   = &ruleError{"import_content_type", "send the file as text/csv"}
+	errImportTooLarge      = &ruleError{"import_too_large", "the file has more than 2 MiB"}
+	errImportNotUTF8       = &ruleError{"import_not_utf8", "save the file as CSV UTF-8"}
+	errImportEmpty         = &ruleError{"import_empty", "the file has no header row"}
+	errImportMalformed     = &ruleError{"import_malformed", "the file is not a valid CSV file"}
+	errImportMissingColumn = &ruleError{"import_missing_column", "the header needs dev_eui, name, vendor, and model"}
+	errImportUnknownColumn = &ruleError{"import_unknown_column", "the header has an unknown or repeated column"}
+	errImportTooManyRows   = &ruleError{"import_too_many_rows", "the file has more than 5000 rows"}
+	errImportRetry         = &ruleError{"import_retry", "the data changed during the import; try again"}
+	errDuplicateInFile     = &ruleError{"duplicate_in_file", "an earlier row of the file has this DevEUI"}
 )
 
 // ruleStatus is the HTTP status of each rule error that is not 400.
@@ -49,7 +60,11 @@ var ruleStatus = map[*ruleError]int{
 	errModelInUse:     http.StatusConflict,
 	errGroupTaken:     http.StatusConflict,
 	errGroupNotFound:  http.StatusNotFound,
-	errNotFound:       http.StatusNotFound,
+
+	errImportContentType: http.StatusUnsupportedMediaType,
+	errImportTooLarge:    http.StatusRequestEntityTooLarge,
+	errImportRetry:       http.StatusConflict,
+	errNotFound:          http.StatusNotFound,
 }
 
 // toHTTP turns a rule error into an *httpkit.Error. A rule error not in

@@ -11,9 +11,12 @@ terms, and `DESIGN.md` states the goals and the decisions.
 | `device_service.go` | Create, update, list, archive, and restore devices.                     |
 | `model_service.go`  | Create, list, rename, and delete device models.                         |
 | `group_service.go`  | Create, list, rename, and delete device groups; add and remove devices. |
+| `import.go`         | The CSV parser: delimiter, BOM, header, and the rules of each row.      |
+| `import_service.go` | The import plan, the preview, and the commit in one transaction.        |
 | `device_handler.go` | `/api/v1/devices*`.                                                     |
 | `model_handler.go`  | `/api/v1/device-models*`.                                               |
 | `group_handler.go`  | `/api/v1/device-groups*`.                                               |
+| `import_handler.go` | `/api/v1/devices/import*` and the template file.                        |
 | `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
 | `errors.go`         | The rule errors and their HTTP status.                                  |
 | `*_repo.go`         | The SQL of the device, device model, and device group tables.           |
@@ -49,6 +52,28 @@ the keys `(organization_id, group_id)` and `(organization_id, device_id)`, so a 
 joins a device and a group of two organizations. A create or an update of a device sets its
 groups in the same transaction. A bulk add or remove ignores the ids of other organizations,
 but a group of another organization answers 404. A deleted group leaves its devices.
+
+## CSV import
+
+The CSV format is a contract with the files that users keep (`DESIGN.md` F3). Do not rename a
+column or remove an accepted value.
+
+- The header row names the columns, in any order and any case: `dev_eui`, `name`, `vendor`,
+  `model` (required), and `type`, `address`, `note`, `groups` (optional). An unknown or repeated
+  column refuses the file.
+- `type` is `water` or `gas`, also written `apă`, `apa`, `gaz`, `вода`, or `газ`, in any case.
+  An empty cell is no type.
+- `groups` holds group names split by `;`. Quote the cell when the delimiter is `;`.
+- The delimiter is `,` or `;`; the header row decides. A UTF-8 BOM is allowed. A file that is
+  not UTF-8 is refused: Excel must save it as "CSV UTF-8".
+- At most 5,000 data rows and 2 MiB. Blank rows are skipped.
+- Each row has the rules of a single device. A DevEUI that an earlier row has is an error.
+- A row whose DevEUI the organization has, archived devices too, is skipped with its groups.
+  The import adds devices; it never changes one.
+
+`POST /api/v1/devices/import/preview` plans and changes nothing. `POST /api/v1/devices/import`
+plans again and creates the new rows, the missing device models, and the missing groups in one
+transaction. Both take the file as a text/csv body, which an HTML form cannot send.
 
 ## Search
 
