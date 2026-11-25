@@ -11,6 +11,7 @@ require (
 	github.com/urfave/cli/v3 v3.14.0
 	go.uber.org/fx v1.24.0
 	go.uber.org/goleak v1.3.0
+	golang.org/x/crypto v0.58.0
 )
 
 require (

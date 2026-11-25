@@ -8,6 +8,8 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/waneock/app-lora/bootstrap"
+	"github.com/waneock/app-lora/core"
+	"github.com/waneock/app-lora/pkg/clock"
 	"github.com/waneock/app-lora/pkg/pgdb"
 	"github.com/waneock/app-lora/system"
 )
@@ -28,7 +30,9 @@ func Command() *cli.Command {
 func Modules() []fx.Option {
 	return []fx.Option{
 		pgdb.Module,
+		clock.Module,
 		system.Module,
+		core.Module,
 		Module,
 	}
 }
