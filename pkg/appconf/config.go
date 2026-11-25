@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/goccy/go-yaml"
 )
@@ -21,6 +22,7 @@ type Config struct {
 	Listen  ListenConfig  `yaml:"listen"`
 	PG      PGConfig      `yaml:"pg"`
 	Logging LoggingConfig `yaml:"logging"`
+	Auth    AuthConfig    `yaml:"auth"`
 }
 
 // SiteConfig is the public address of the application.
@@ -47,6 +49,17 @@ type LoggingConfig struct {
 	Level string `yaml:"level"`
 	// Format is text or json.
 	Format string `yaml:"format"`
+}
+
+// AuthConfig holds the login and session settings.
+type AuthConfig struct {
+	// SessionTTL is how long a session lives after its last use.
+	SessionTTL time.Duration `yaml:"session_ttl"`
+	// LockoutAttempts is the number of failed logins in a row that locks a
+	// login.
+	LockoutAttempts int `yaml:"lockout_attempts"`
+	// LockoutDuration is how long a locked login stays locked.
+	LockoutDuration time.Duration `yaml:"lockout_duration"`
 }
 
 // Load reads the config file at path. It expands environment variables
@@ -94,6 +107,15 @@ func (c *Config) setDefaults() {
 	if c.Logging.Format == "" {
 		c.Logging.Format = "text"
 	}
+	if c.Auth.SessionTTL == 0 {
+		c.Auth.SessionTTL = 30 * 24 * time.Hour
+	}
+	if c.Auth.LockoutAttempts == 0 {
+		c.Auth.LockoutAttempts = 5
+	}
+	if c.Auth.LockoutDuration == 0 {
+		c.Auth.LockoutDuration = 5 * time.Minute
+	}
 }
 
 func (c *Config) validate() error {
@@ -107,6 +129,15 @@ func (c *Config) validate() error {
 	case "text", "json":
 	default:
 		return fmt.Errorf("logging.format: got %q, want text or json", c.Logging.Format)
+	}
+	if c.Auth.SessionTTL < time.Hour {
+		return fmt.Errorf("auth.session_ttl: got %s, want at least 1h", c.Auth.SessionTTL)
+	}
+	if c.Auth.LockoutAttempts < 1 {
+		return fmt.Errorf("auth.lockout_attempts: got %d, want at least 1", c.Auth.LockoutAttempts)
+	}
+	if c.Auth.LockoutDuration < 0 {
+		return fmt.Errorf("auth.lockout_duration: got %s, want 0 or more", c.Auth.LockoutDuration)
 	}
 	return nil
 }

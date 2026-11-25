@@ -2,6 +2,7 @@ package appconf_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,21 @@ func TestParse(t *testing.T) {
 		assert.Equal(t, ":8080", conf.Listen.HTTP)
 		assert.Equal(t, "info", conf.Logging.Level)
 		assert.Equal(t, "text", conf.Logging.Format)
+		assert.Equal(t, 30*24*time.Hour, conf.Auth.SessionTTL)
+		assert.Equal(t, 5, conf.Auth.LockoutAttempts)
+		assert.Equal(t, 5*time.Minute, conf.Auth.LockoutDuration)
+	})
+
+	t.Run("auth durations", func(t *testing.T) {
+		conf, err := appconf.Parse([]byte("pg:\n  dsn: x\nauth:\n  session_ttl: 48h\n  lockout_duration: 90s\n"))
+		require.NoError(t, err)
+		assert.Equal(t, 48*time.Hour, conf.Auth.SessionTTL)
+		assert.Equal(t, 90*time.Second, conf.Auth.LockoutDuration)
+	})
+
+	t.Run("short session ttl", func(t *testing.T) {
+		_, err := appconf.Parse([]byte("pg:\n  dsn: x\nauth:\n  session_ttl: 10m\n"))
+		require.ErrorContains(t, err, "auth.session_ttl")
 	})
 
 	t.Run("env expansion", func(t *testing.T) {
