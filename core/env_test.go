@@ -49,7 +49,7 @@ func newTestEnv(t *testing.T) *testEnv {
 
 	auth := newAuthService(pool, pw, clk, conf)
 	admin := newAdminService(pool, pw, clk)
-	middleware := newAuthMiddleware(auth, conf, logger)
+	middleware := newGuard(auth, conf, logger)
 	mux := http.NewServeMux()
 	registerAuthHandler(mux, newAuthHandler(auth, middleware))
 	registerAdminHandler(mux, newAdminHandler(admin, middleware))
@@ -145,4 +145,10 @@ func errorCode(t *testing.T, rec *httptest.ResponseRecorder) string {
 	}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body), rec.Body.String())
 	return body.Code
+}
+
+// guard returns the Guard of the environment, for the member route tests.
+func (e *testEnv) guard() *Guard {
+	conf := e.conf
+	return newGuard(e.auth, conf, slog.New(slog.NewTextHandler(io.Discard, nil)))
 }

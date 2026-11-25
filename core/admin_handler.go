@@ -10,10 +10,10 @@ import (
 
 type adminHandler struct {
 	admin      *adminService
-	middleware *authMiddleware
+	middleware *Guard
 }
 
-func newAdminHandler(admin *adminService, middleware *authMiddleware) *adminHandler {
+func newAdminHandler(admin *adminService, middleware *Guard) *adminHandler {
 	return &adminHandler{admin: admin, middleware: middleware}
 }
 

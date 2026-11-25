@@ -7,7 +7,7 @@ Organizations, users, the admin, logins, and sessions. `CONTEXT.md` defines the 
 | `module.go`               | `Module`: provides the services and handlers and binds the routes.   |
 | `auth_service.go`         | Login, session resolve and extension, logout, password change.       |
 | `admin_service.go`        | Organizations and their users, as the admin manages them; `CreateAdmin`. |
-| `auth_middleware.go`      | The session cookie, the access levels, and the request principal.    |
+| `guard.go`                | `Guard`: the session cookie, the access levels, `Member`, `CallerFrom`. |
 | `auth_handler.go`         | `/api/v1/auth/*`: login, logout, me, password.                       |
 | `admin_handler.go`        | `/api/v1/admin/*`: list, create, deactivate, reactivate, reset password. |
 | `passwords.go`            | bcrypt, the password rules, temporary passwords, the login rule.     |
@@ -28,12 +28,15 @@ Organizations, users, the admin, logins, and sessions. `CONTEXT.md` defines the 
 
 ## Access levels
 
-`authMiddleware.wrap` takes one level for each route:
+`Guard.wrap` takes one level for each route. Another context uses `Guard.Member` and reads
+the user with `CallerFrom`.
 
 - `accessPublic`: no session.
 - `accessTemporary`: a session, also with a temporary password. Only `me`, `password`, and
   `logout` use it.
 - `accessUser`: a session with a password the user chose.
+- `accessMember`: as `accessUser`, and the user is a member of an organization. An admin gets
+  403 `forbidden`.
 - `accessAdmin`: as `accessUser`, and the user is an admin.
 
 ## Login rules

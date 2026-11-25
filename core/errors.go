@@ -23,6 +23,7 @@ var (
 	errUnauthenticated         = &ruleError{"unauthenticated", "log in first"}
 	errPasswordChangeRequired  = &ruleError{"password_change_required", "replace the temporary password first"}
 	errForbidden               = &ruleError{"forbidden", "only an admin can do this"}
+	errNotMember               = &ruleError{"forbidden", "only a member of an organization can do this"}
 	errWrongCurrentPassword    = &ruleError{"invalid_current_password", "the current password is wrong"}
 	errPasswordTooShort        = &ruleError{"password_too_short", "the password must have at least 8 characters"}
 	errPasswordTooLong         = &ruleError{"password_too_long", "the password must have at most 72 bytes"}
@@ -40,6 +41,7 @@ var ruleStatus = map[*ruleError]int{
 	errUnauthenticated:         http.StatusUnauthorized,
 	errPasswordChangeRequired:  http.StatusForbidden,
 	errForbidden:               http.StatusForbidden,
+	errNotMember:               http.StatusForbidden,
 	errWrongCurrentPassword:    http.StatusBadRequest,
 	errPasswordTooShort:        http.StatusBadRequest,
 	errPasswordTooLong:         http.StatusBadRequest,
