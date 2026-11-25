@@ -27,16 +27,31 @@ The words in this file have the meanings that the glossaries give them:
 - **Decode.** Decode the payload with the decoder of the device model. Get the pulse count and
   the alarm flags. If the device model has no decoder, keep the payload only. When a decoder is
   added, decode the stored history again.
-- **My devices.** A list of the devices of the organization. Filter by device group. A device
-  can be in zero or more device groups, whatever its device model.
-- **Device page.** Device model, DevEUI, name, last uplink time. A chart and a table of the
+- **My devices.** A list of the devices of the organization, paged on the server for thousands
+  of devices. Search by name, DevEUI, or address. Filter by device group, device model, meter
+  type, and archived devices. Select many devices to add them to a group, remove them from a
+  group, or archive them. A device can be in zero or more device groups, whatever its device
+  model.
+- **Device page.** Device model, DevEUI, name, meter type, address, note, device groups, last
+  uplink time. A chart and a table of the
   reported pulse count. A table of alarms, each with the time it was raised and cleared. A
   table of uplinks with their payloads. Until the device model has a decoder, the page shows
-  the uplinks only.
-- **Add a device.** Give DevEUI, name, and device model. Pick a device model of the
-  organization or add a new one. The DevEUI must be unique in the organization only.
-- **Device models (admin).** See the device models of all organizations, and which of them have
-  a decoder. Assign a decoder to a device model.
+  the uplinks only. Each empty section says why it is empty.
+- **Add a device.** Give DevEUI, name, and device model. Meter type (water or gas), address, and
+  note are optional. Pick a device model of the organization or add a new one. The DevEUI must be
+  unique in the organization only. The DevEUI can change only while the device has no uplink.
+- **Import devices.** Upload a CSV file with up to 5,000 rows. A preview shows each row as new,
+  already present, or wrong, with the reason. The import creates the missing device models and
+  device groups. It adds devices only; it does not change present devices.
+- **Archive a device.** An archived device leaves the list and keeps its history. A user can
+  restore it. Its new uplinks are unmatched uplinks.
+- **Device models.** A user sees the device models of the organization with their device count,
+  renames a device model, and deletes a device model that no device uses. A device model is a
+  vendor and a model name.
+- **Device groups.** A user creates, renames, and deletes device groups. A deleted group leaves
+  its devices in place.
+- **Device models (admin).** See the device models of all organizations, with the organization,
+  the device count, and the decoder. Assign a decoder to a device model.
 - **Integrations.** A user adds any number of integrations, each for ChirpStack or TTN, with no
   help from the admin. The platform shows the ingest URL and the secret one time, with the setup
   steps for that network server. The integration page shows the last uplink, the uplinks of the

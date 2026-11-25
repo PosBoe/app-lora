@@ -18,10 +18,19 @@ one organization, not on the whole platform: two organizations can each have a d
 same DevEUI.
 _Avoid_: device ID, serial number
 
+**Archived device**:
+A device that its users took out of the device list. It keeps its history and can be restored.
+It gets no new uplinks: an uplink with its DevEUI is an unmatched uplink.
+_Avoid_: deleted device, disabled device, inactive device
+
 **Meter**:
 The water or gas meter that a device is mounted on. The meter makes the pulses. The platform
 does not keep a record of meters.
 _Avoid_: contor, counter (the device is not the meter)
+
+**Meter type**:
+What a device measures: water or gas. A user sets it on the device; it is optional.
+_Avoid_: medium, device type, kind
 
 **Pulse**:
 One electrical pulse that a meter sends to its device for a fixed volume of water or gas.
@@ -32,10 +41,14 @@ The cumulative number of pulses that a device reports in one uplink. It is not a
 _Avoid_: impulses, reading, index, consumption (these name a volume in m³)
 
 **Device model**:
-The vendor and model of a device, as one organization names it. Each organization has its own
-device models; no other organization sees them. Two organizations can each have a device model
-for the same hardware.
+The vendor and the model name of a device, as one organization names it. Each organization has
+its own device models; no other organization sees them. Two organizations can each have a device
+model for the same hardware.
 _Avoid_: device type, device profile (in ChirpStack, a device profile holds radio settings)
+
+**Vendor**:
+The company that makes a device, as a device model names it, for example Milesight.
+_Avoid_: manufacturer, brand, producer
 
 **Device group**:
 A named set of devices in one organization, chosen by its users. A device is in zero or more

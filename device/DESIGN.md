@@ -24,6 +24,10 @@ uplink is kept as an unmatched uplink for 30 days. The users of the organization
 that names its DevEUI. When the organization adds the device, the device gets the unmatched
 uplinks.
 
+Users add devices one at a time or from a CSV file, and sort them into device groups. A device
+leaves the list by archive, never by delete, so its history stays. The DevEUI of a device is
+fixed after its first uplink, because the DevEUI then identifies that history.
+
 The platform stores the payload of every uplink as it arrives, with or without a decoder.
 Decoders are Go code in the application, and all organizations share them. Device models are
 private to each organization. The admin assigns a decoder to each device model. When a device
@@ -97,6 +101,25 @@ without it.
 - **G15** — A user adds a new device model while adding a device, with no wait for the admin.
   Need: [user] confirmed.
   Evidence: none
+- **G17** — A user adds up to 5,000 devices from one CSV file, sees the result of each row
+  before anything is created, and then creates them in one step.
+  Need: [user] confirmed: an organization has hundreds to thousands of devices.
+  Evidence: none
+- **G18** — A user finds one device among thousands by its name, DevEUI, or address, and
+  filters the device list by device group, device model, meter type, and archived state.
+  Need: [user] confirmed the fleet size.
+  Evidence: none
+- **G19** — An archived device leaves the device list, keeps its history, and shows that history
+  again when a user restores it.
+  Need: [user] confirmed archive in place of delete.
+  Evidence: none
+- **G20** — A CSV row gives the meter type in English, Romanian, or Russian: `water`, `apă`, and
+  `вода` give the same meter type, and so do `gas`, `gaz`, and `газ`.
+  Need: [user] confirmed.
+  Evidence: none
+- **G21** — A user corrects the DevEUI of a device that has no uplink yet.
+  Need: [user] confirmed: a DevEUI typed wrong is a common error at setup.
+  Evidence: none
 
 ## Secondary goals
 
@@ -129,6 +152,10 @@ without it.
 - **N8** [no guarantee] — A correct chart when a pulse count resets or overflows.
 - **N9** [no guarantee] — The port and the radio metadata (RSSI, SNR) of an uplink.
 - **N10** [no guarantee] — Unmatched uplinks older than 30 days.
+- **N11** [excluded] — The deletion of a device with its history.
+  Reopens when: an organization must remove the data of a device, for example on a legal
+  request.
+- **N12** [no guarantee] — A CSV import that changes the devices already present.
 
 ## Frozen contracts
 
