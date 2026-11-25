@@ -14,7 +14,8 @@ The words in this file have the meanings that the glossaries give them:
   own network server (ChirpStack or TTN). It knows LoRaWAN, but it cannot decode each vendor's
   payload format. Its users use the UI in Romanian or Russian.
 - **Admin (platform operator).** Creates organizations and their users. Writes the decoders and
-  assigns a decoder to each device model. Uses user profiles to collect feedback.
+  assigns a decoder to each device model. Uses user profiles to collect feedback. Reads the
+  data of each organization to help its users, and changes none of it.
 
 ## Product purpose
 
@@ -36,18 +37,31 @@ The words in this file have the meanings that the glossaries give them:
   organization or add a new one. The DevEUI must be unique in the organization only.
 - **Device models (admin).** See the device models of all organizations, and which of them have
   a decoder. Assign a decoder to a device model.
-- **Organizations (admin).** Create an organization and its user with login and password.
-- **Profile.** The user fills in and edits their profile: first name, last name, email, and
-  phone number in the `+373` format.
+- **Integrations.** A user adds any number of integrations, each for ChirpStack or TTN, with no
+  help from the admin. The platform shows the ingest URL and the secret one time, with the setup
+  steps for that network server. The integration page shows the last uplink, the uplinks of the
+  last 24 hours, and the last format error.
+- **Organizations (admin).** Create an organization and its user with a login. The platform
+  shows a temporary password one time. Reset the password of a user. Deactivate and reactivate
+  an organization. See each organization with its user profile, last login, device count,
+  integration count, and last uplink.
+- **Admin view.** Open an organization and see its pages as its users see them, read-only.
+- **Profile.** The user fills in and edits their profile: first name, last name, email, phone
+  number in the `+373` format, and UI language. The user changes their own password there.
+  Until the profile is complete, a banner asks the user to fill it in.
 
 ## MVP scope
 
 - One organization is one client company. It has users. In the MVP, the admin creates one user
   for each organization. No roles inside an organization.
 - An organization sees only its own devices, device models, device groups, and uplinks. Only
-  the admin sees all organizations.
+  the admin sees all organizations, and only to read.
 - Login with login and password. The admin makes the credentials. No self-registration and no
   password reset by email.
+- A user must replace a temporary password at the next login, before doing anything else.
+- The users of a deactivated organization cannot log in. Its integrations still deliver
+  uplinks.
+- The first admin is created with a command on the server. The UI creates no admins.
 - Decoders are Go code in the application. A new decoder ships with a new release.
 - Alarms come only from alarm flags in the decoded payload. An alarm is raised by the first
   uplink with its flag and cleared by the first decoded uplink without it.
@@ -71,6 +85,8 @@ The words in this file have the meanings that the glossaries give them:
 - No notifications (SMS, email, push).
 - No decoders written by users or uploaded at runtime.
 - No data export and no public API.
+- No single sign-on, no two-factor login, and no roles inside an organization.
+- No admin changes to the data of an organization, and no deletion of an organization in the UI.
 - No markets outside Moldova and no languages other than Romanian and Russian.
 
 ## Design register
