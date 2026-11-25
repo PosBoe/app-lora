@@ -123,8 +123,8 @@ func plan(ctx context.Context, q pgdb.Querier, orgID int64, rows []importRow) (*
 		p.groups[strings.ToLower(g.Name)] = g.ID
 	}
 	var euis []string
-	for _, r := range rows {
-		if r.Err == nil {
+	for i := range rows {
+		if r := &rows[i]; r.Err == nil {
 			euis = append(euis, r.Fields.DevEUI)
 		}
 	}
@@ -135,7 +135,8 @@ func plan(ctx context.Context, q pgdb.Querier, orgID int64, rows []importRow) (*
 
 	newModel := make(map[string]bool)
 	newGroup := make(map[string]bool)
-	for _, r := range rows {
+	for i := range rows {
+		r := &rows[i]
 		out := importedRow{Line: r.Line, DevEUI: r.RawDevEUI, Name: r.RawName}
 		switch {
 		case r.Err != nil:
@@ -150,7 +151,7 @@ func plan(ctx context.Context, q pgdb.Querier, orgID int64, rows []importRow) (*
 			out.DevEUI, out.Name = r.Fields.DevEUI, r.Fields.Name
 			out.Vendor, out.Model, out.Groups = r.Vendor, r.Model, r.Groups
 			p.totals.New++
-			p.creates = append(p.creates, r)
+			p.creates = append(p.creates, *r)
 
 			if key := modelKey(r.Vendor, r.Model); p.models[key] == 0 {
 				out.NewModel = true
@@ -201,7 +202,8 @@ func createNames(ctx context.Context, tx pgx.Tx, orgID int64, p *importPlan) err
 // createDevices creates the devices of a plan and their group memberships.
 func createDevices(ctx context.Context, tx pgx.Tx, orgID int64, p *importPlan) error {
 	fields := make([]deviceFields, len(p.creates))
-	for i, r := range p.creates {
+	for i := range p.creates {
+		r := &p.creates[i]
 		f := r.Fields
 		f.DeviceModelID = p.models[modelKey(r.Vendor, r.Model)]
 		fields[i] = f
@@ -212,7 +214,8 @@ func createDevices(ctx context.Context, tx pgx.Tx, orgID int64, p *importPlan) e
 	}
 
 	var groupIDs, deviceIDs []int64
-	for _, r := range p.creates {
+	for i := range p.creates {
+		r := &p.creates[i]
 		for _, g := range r.Groups {
 			groupIDs = append(groupIDs, p.groups[strings.ToLower(g)])
 			deviceIDs = append(deviceIDs, ids[r.Fields.DevEUI])

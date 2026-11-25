@@ -73,7 +73,8 @@ func (h *importHandler) preview(w http.ResponseWriter, req *http.Request, orgID 
 		Rows:   make([]importRowResponse, len(p.rows)),
 		Totals: importTotalsResponse(p.totals),
 	}
-	for i, r := range p.rows {
+	for i := range p.rows {
+		r := &p.rows[i]
 		resp.Rows[i] = importRowResponse{
 			Line: r.Line, Status: r.Status, Code: r.Code, DevEUI: r.DevEUI, Name: r.Name,
 			Vendor: r.Vendor, Model: r.Model, Groups: nonNil(r.Groups), NewModel: r.NewModel,
