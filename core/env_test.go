@@ -48,7 +48,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	auth := newAuthService(pool, pw, clk, conf)
-	admin := newAdminService(pool, pw, clk)
+	admin := newAdminService(pool, pw, clk, fixedCounts{})
 	middleware := newGuard(auth, conf, logger)
 	mux := http.NewServeMux()
 	registerAuthHandler(mux, newAuthHandler(auth, middleware))
@@ -151,4 +151,12 @@ func errorCode(t *testing.T, rec *httptest.ResponseRecorder) string {
 func (e *testEnv) guard() *Guard {
 	conf := e.conf
 	return newGuard(e.auth, conf, slog.New(slog.NewTextHandler(io.Discard, nil)))
+}
+
+// fixedCounts is a DeviceCounter with set counts. The device context tests
+// the real one.
+type fixedCounts map[int64]int
+
+func (c fixedCounts) DevicesByOrganization(context.Context) (map[int64]int, error) {
+	return c, nil
 }

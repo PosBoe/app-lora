@@ -35,6 +35,9 @@ func Modules() []fx.Option {
 		system.Module,
 		core.Module,
 		device.Module,
+		// core counts devices through its own interface, so it does not
+		// import the device context.
+		fx.Provide(func(s *device.Stats) core.DeviceCounter { return s }),
 		Module,
 	}
 }

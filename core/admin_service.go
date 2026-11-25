@@ -15,6 +15,14 @@ import (
 type organizationMembers struct {
 	organization *organization
 	users        []*user
+	deviceCount  int
+}
+
+// DeviceCounter counts the devices of each organization. The device context
+// implements it; the composition root binds it, so core does not import the
+// device context.
+type DeviceCounter interface {
+	DevicesByOrganization(ctx context.Context) (map[int64]int, error)
 }
 
 // adminService holds what the admin does to organizations and their users.
@@ -22,10 +30,11 @@ type adminService struct {
 	pool      *pgxpool.Pool
 	passwords *passwords
 	clock     clock.Clock
+	devices   DeviceCounter
 }
 
-func newAdminService(pool *pgxpool.Pool, pw *passwords, clk clock.Clock) *adminService {
-	return &adminService{pool: pool, passwords: pw, clock: clk}
+func newAdminService(pool *pgxpool.Pool, pw *passwords, clk clock.Clock, devices DeviceCounter) *adminService {
+	return &adminService{pool: pool, passwords: pw, clock: clk, devices: devices}
 }
 
 // createOrganization creates an organization and its first user, in one
@@ -123,7 +132,7 @@ func (s *adminService) reactivate(ctx context.Context, organizationID int64) err
 }
 
 // listOrganizations returns all organizations, the newest first, each with
-// its users.
+// its users and the number of its devices that are not archived.
 func (s *adminService) listOrganizations(ctx context.Context) ([]*organizationMembers, error) {
 	orgs, err := newOrganizationRepo(s.pool).list(ctx)
 	if err != nil {
@@ -138,9 +147,14 @@ func (s *adminService) listOrganizations(ctx context.Context) ([]*organizationMe
 	for _, u := range members {
 		byOrg[*u.OrganizationID] = append(byOrg[*u.OrganizationID], u)
 	}
+	counts, err := s.devices.DevicesByOrganization(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	out := make([]*organizationMembers, len(orgs))
 	for i, org := range orgs {
-		out[i] = &organizationMembers{organization: org, users: byOrg[org.ID]}
+		out[i] = &organizationMembers{organization: org, users: byOrg[org.ID], deviceCount: counts[org.ID]}
 	}
 	return out, nil
 }

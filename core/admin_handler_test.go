@@ -172,3 +172,20 @@ func TestCreateAdmin(t *testing.T) {
 	_, err = CreateAdmin(ctx, env.pool, login)
 	require.ErrorIs(t, err, errLoginTaken)
 }
+
+func TestAdminDeviceCount(t *testing.T) {
+	env := newTestEnv(t)
+	_, _, orgID := env.member(t)
+
+	admin := newAdminService(env.pool, env.auth.passwords, env.clock, fixedCounts{orgID: 3})
+	orgs, err := admin.listOrganizations(context.Background())
+	require.NoError(t, err)
+
+	for _, om := range orgs {
+		if om.organization.ID == orgID {
+			assert.Equal(t, 3, newOrganizationResponse(om).DeviceCount)
+			return
+		}
+	}
+	require.FailNow(t, "the organization is not in the list")
+}

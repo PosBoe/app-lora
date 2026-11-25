@@ -33,6 +33,7 @@ type organizationResponse struct {
 	Name          string           `json:"name"`
 	DeactivatedAt *time.Time       `json:"deactivated_at"`
 	CreatedAt     time.Time        `json:"created_at"`
+	DeviceCount   int              `json:"device_count"`
 	Users         []memberResponse `json:"users"`
 }
 
@@ -53,6 +54,7 @@ func newOrganizationResponse(om *organizationMembers) organizationResponse {
 		Name:          om.organization.Name,
 		DeactivatedAt: om.organization.DeactivatedAt,
 		CreatedAt:     om.organization.CreatedAt,
+		DeviceCount:   om.deviceCount,
 		Users:         make([]memberResponse, len(om.users)),
 	}
 	for i, u := range om.users {
