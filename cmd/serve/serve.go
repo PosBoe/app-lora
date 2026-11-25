@@ -9,6 +9,7 @@ import (
 
 	"github.com/waneock/app-lora/bootstrap"
 	"github.com/waneock/app-lora/core"
+	"github.com/waneock/app-lora/device"
 	"github.com/waneock/app-lora/pkg/clock"
 	"github.com/waneock/app-lora/pkg/pgdb"
 	"github.com/waneock/app-lora/system"
@@ -33,6 +34,7 @@ func Modules() []fx.Option {
 		clock.Module,
 		system.Module,
 		core.Module,
+		device.Module,
 		Module,
 	}
 }

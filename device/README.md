@@ -1,0 +1,52 @@
+# device
+
+The device registry of an organization: devices and device models. `CONTEXT.md` defines the
+terms, and `DESIGN.md` states the goals and the decisions.
+
+| File                | Content                                                                 |
+| ------------------- | ----------------------------------------------------------------------- |
+| `module.go`         | `Module`: provides the services, the handlers, and `Stats`.             |
+| `guard.go`          | The `guard` seam, `member`, and the organization of the caller.         |
+| `fields.go`         | The DevEUI rule, the meter types, the field rules, the search pattern.  |
+| `device_service.go` | Create, update, list, archive, and restore devices.                     |
+| `model_service.go`  | Create, list, rename, and delete device models.                         |
+| `device_handler.go` | `/api/v1/devices*`.                                                     |
+| `model_handler.go`  | `/api/v1/device-models*`.                                               |
+| `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
+| `errors.go`         | The rule errors and their HTTP status.                                  |
+| `*_repo.go`         | The SQL of the `device_models` and `devices` tables.                    |
+
+## The organization of a request
+
+Every route goes through `guard.Member`. In production the guard is `*core.Guard`: it lets in
+only a member of an organization and puts a `core.Caller` in the request context. A route reads
+the organization from that caller, never from the request. Every query of a repo takes the
+organization, so a device or a device model of another organization answers 404.
+
+A test uses a guard that puts a caller in the context with `core.ContextWithCaller`.
+
+## DevEUI
+
+- A DevEUI is stored as 16 lower-case hex characters. A request can write it in upper case, and
+  with `:`, `-`, or spaces between the bytes.
+- A DevEUI is unique in one organization. An archived device keeps its DevEUI, so a new device
+  with it answers `dev_eui_archived`, and the user can restore the archived device.
+- An update changes the DevEUI only while the device has no uplink (`hasUplinks`). The ingestion
+  of uplinks makes this check real.
+
+## Device models
+
+A device uses a device model of its own organization. The foreign key
+`(organization_id, device_model_id)` holds this rule in the database. A device model that a
+device uses, also an archived device, cannot be deleted.
+
+## Search
+
+`devices.search` is a stored lower-case join of the name, the DevEUI, and the address, with a
+`pg_trgm` index. A search text matches any part of it. A search text that is a DevEUI with
+separators loses the separators first.
+
+## Tests
+
+The tests use the test database through `pkg/pgtest`, so they skip under `-short`. Run them
+with `task test:full`, or with `LORA_CONFIG` set to the absolute path of `config/test.yml`.
