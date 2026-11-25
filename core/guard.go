@@ -84,18 +84,27 @@ type Caller struct {
 	IsAdmin        bool
 }
 
+type callerKey struct{}
+
 // CallerFrom returns the user that a Guard handler put in ctx. It reports
 // false outside such a handler.
 func CallerFrom(ctx context.Context) (Caller, bool) {
-	p := principalFrom(ctx)
-	if p == nil {
-		return Caller{}, false
-	}
+	c, ok := ctx.Value(callerKey{}).(Caller)
+	return c, ok
+}
+
+// ContextWithCaller puts c in ctx, as a Guard handler does. A test of another
+// context uses it in place of a session.
+func ContextWithCaller(ctx context.Context, c Caller) context.Context {
+	return context.WithValue(ctx, callerKey{}, c)
+}
+
+func callerOf(p *principal) Caller {
 	c := Caller{UserID: p.ID, IsAdmin: p.IsAdmin}
 	if p.Organization != nil {
 		c.OrganizationID = p.Organization.ID
 	}
-	return c, true
+	return c
 }
 
 // wrap returns an http.Handler that checks the access level, puts the
@@ -111,7 +120,8 @@ func (m *Guard) wrap(level access, fn apiFunc) http.Handler {
 				httpkit.WriteError(w, req, m.logger, toHTTP(err))
 				return
 			}
-			req = req.WithContext(context.WithValue(req.Context(), principalKey{}, p))
+			ctx := context.WithValue(req.Context(), principalKey{}, p)
+			req = req.WithContext(ContextWithCaller(ctx, callerOf(p)))
 		}
 
 		if err := fn(w, req); err != nil {
