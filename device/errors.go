@@ -54,6 +54,14 @@ var (
 	errIntegrationNameTooLong  = &ruleError{"integration_name_too_long", "the integration name has at most 100 characters"}
 	errIntegrationKindInvalid  = &ruleError{"integration_kind_invalid", "the kind is chirpstack or ttn"}
 	errIntegrationNotFound     = &ruleError{"integration_not_found", "the integration is not in the organization"}
+
+	errInvalidSecret      = &ruleError{"invalid_secret", "send the secret of an integration as Authorization: Bearer <secret>"}
+	errWrongEndpoint      = &ruleError{"wrong_endpoint", "the integration is of another network server; use its own ingest URL"}
+	errIngestTooLarge     = &ruleError{"ingest_too_large", "the body has more than 1 MiB"}
+	errIngestInvalidJSON  = &ruleError{"ingest_invalid_json", "the body is not the JSON of an uplink"}
+	errIngestDevEUI       = &ruleError{"ingest_dev_eui_invalid", "the uplink has no valid DevEUI"}
+	errIngestPayload      = &ruleError{"ingest_payload_invalid", "the payload is not base64"}
+	errChirpStackProtobuf = &ruleError{"chirpstack_protobuf", "set the payload encoding of the ChirpStack integration to JSON"}
 )
 
 // ruleStatus is the HTTP status of each rule error that is not 400.
@@ -71,6 +79,8 @@ var ruleStatus = map[*ruleError]int{
 	errImportRetry:       http.StatusConflict,
 
 	errIntegrationNotFound: http.StatusNotFound,
+	errInvalidSecret:       http.StatusUnauthorized,
+	errIngestTooLarge:      http.StatusRequestEntityTooLarge,
 	errNotFound:            http.StatusNotFound,
 }
 

@@ -66,6 +66,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	registerModelHandler(mux, &modelHandler{models: newModelService(pool), guard: g})
 	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
 	registerImportHandler(mux, &importHandler{imports: newImportService(pool), guard: g})
+	registerIngestHandler(mux, newIngestHandler(newIngestService(pool, clk), g.logger))
 	registerIntegrationHandler(mux, &integrationHandler{
 		integrations: newIntegrationService(pool, clk),
 		guard:        g,
@@ -179,4 +180,17 @@ func (e *testEnv) integration(t *testing.T, orgID int64, kind string) secretResp
 	t.Helper()
 	rec := e.do(t, orgID, http.MethodPost, "/api/v1/integrations", integrationRequest{Name: "NS " + kind, Kind: kind})
 	return decode[secretResponse](t, rec, http.StatusCreated)
+}
+
+// ingest posts a network server body to an ingest route with a secret.
+func (e *testEnv) ingest(t *testing.T, path, secret, contentType string, body []byte) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	req.Header.Set("Content-Type", contentType)
+	if secret != "" {
+		req.Header.Set("Authorization", "Bearer "+secret)
+	}
+	rec := httptest.NewRecorder()
+	e.mux.ServeHTTP(rec, req)
+	return rec
 }

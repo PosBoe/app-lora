@@ -1,0 +1,37 @@
+{
+  "deduplicationId": "3ac7e3c4-4401-4b8d-9386-a5c902f9202d",
+  "time": "2026-11-25T09:34:15.775023242+00:00",
+  "deviceInfo": {
+    "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+    "tenantName": "ChirpStack",
+    "applicationId": "17c82e96-be03-4f38-aef3-f83d48582d97",
+    "applicationName": "Contoare",
+    "deviceProfileId": "14855bf7-d10d-4aee-b618-ebfcb64dc7ad",
+    "deviceProfileName": "EM300-DI",
+    "deviceName": "bloc-3",
+    "devEui": "70b3d57ed0001234",
+    "deviceClassEnabled": "CLASS_A",
+    "tags": {}
+  },
+  "devAddr": "00189440",
+  "adr": true,
+  "dr": 5,
+  "fCnt": 42,
+  "fPort": 85,
+  "confirmed": false,
+  "data": "AXVnAgEABQ==",
+  "rxInfo": [
+    {
+      "gatewayId": "0016c001f153a14c",
+      "uplinkId": 4217106255,
+      "rssi": -36,
+      "snr": 10.5,
+      "context": "E3OWOQ==",
+      "metadata": {}
+    }
+  ],
+  "txInfo": {
+    "frequency": 868100000,
+    "modulation": { "lora": { "bandwidth": 125000, "spreadingFactor": 7, "codeRate": "CR_4_5" } }
+  }
+}

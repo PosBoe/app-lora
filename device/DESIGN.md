@@ -164,13 +164,13 @@ without it.
   and `time`.
   Frozen by: ChirpStack, which owns the format; the platform only reads it.
   A break costs: the uplinks of each organization on ChirpStack stop arriving.
-  Evidence: none
+  Evidence: `device/testdata/chirpstack_up.json`, `device/ingest_parse_test.go:TestParseChirpStack`
 - **F2** — The TTN (The Things Stack v3) webhook uplink message: `end_device_ids.dev_eui`,
   `uplink_message.f_cnt`, `uplink_message.frm_payload` (the payload in base64), and
   `received_at`.
   Frozen by: The Things Industries, which owns the format; the platform only reads it.
   A break costs: the uplinks of each organization on TTN stop arriving.
-  Evidence: none
+  Evidence: `device/testdata/ttn_uplink.json`, `device/ingest_parse_test.go:TestParseTTN`
 
 - **F3** — The device CSV file: the header names `dev_eui`, `name`, `vendor`, `model`, `type`,
   `address`, `note`, `groups`; the `type` values `water`, `gas`, `apă`, `apa`, `gaz`, `вода`,

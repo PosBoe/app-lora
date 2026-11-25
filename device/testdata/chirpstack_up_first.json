@@ -1,0 +1,12 @@
+{
+  "deduplicationId": "5b2a1f0e-9d1c-4a47-8a8e-0c1d2e3f4a5b",
+  "deviceInfo": {
+    "tenantName": "ChirpStack",
+    "applicationName": "Contoare",
+    "deviceName": "bloc-4",
+    "devEui": "70B3D57ED0001235"
+  },
+  "devAddr": "00189441",
+  "fPort": 85,
+  "data": ""
+}

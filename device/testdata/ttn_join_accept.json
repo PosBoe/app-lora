@@ -1,0 +1,12 @@
+{
+  "end_device_ids": {
+    "device_id": "bloc-3",
+    "application_ids": { "application_id": "contoare" },
+    "dev_eui": "70B3D57ED0001234"
+  },
+  "received_at": "2026-11-25T09:33:01Z",
+  "join_accept": {
+    "session_key_id": "AYk1pH8ZzZ0lYg==",
+    "received_at": "2026-11-25T09:33:00Z"
+  }
+}

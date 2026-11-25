@@ -1,0 +1,31 @@
+{
+  "end_device_ids": {
+    "device_id": "bloc-3",
+    "application_ids": { "application_id": "contoare" },
+    "dev_eui": "70B3D57ED0001234",
+    "join_eui": "0000000000000000",
+    "dev_addr": "260B1234"
+  },
+  "correlation_ids": ["as:up:01HZX3J6Q4K9V8P7N6M5L4K3J2"],
+  "received_at": "2026-11-25T09:34:16.123456789Z",
+  "uplink_message": {
+    "session_key_id": "AYk1pH8ZzZ0lYg==",
+    "f_port": 85,
+    "f_cnt": 43,
+    "frm_payload": "AXVnAgEABQ==",
+    "rx_metadata": [
+      {
+        "gateway_ids": { "gateway_id": "gw-centru", "eui": "0016C001F153A14C" },
+        "rssi": -42,
+        "channel_rssi": -42,
+        "snr": 9.25
+      }
+    ],
+    "settings": {
+      "data_rate": { "lora": { "bandwidth": 125000, "spreading_factor": 7 } },
+      "frequency": "868100000"
+    },
+    "received_at": "2026-11-25T09:34:15.987654321Z",
+    "consumed_airtime": "0.061696s"
+  }
+}
