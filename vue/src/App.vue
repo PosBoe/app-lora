@@ -34,9 +34,14 @@ async function signOut() {
         >
           {{ $t('nav.organizations') }}
         </v-btn>
-        <v-btn v-else :to="{ name: 'Home' }" variant="text" size="small" data-test="nav-devices">
-          {{ $t('nav.devices') }}
-        </v-btn>
+        <template v-else>
+          <v-btn :to="{ name: 'Home' }" exact variant="text" size="small" data-test="nav-devices">
+            {{ $t('nav.devices') }}
+          </v-btn>
+          <v-btn :to="{ name: 'DeviceModels' }" variant="text" size="small" data-test="nav-models">
+            {{ $t('nav.models') }}
+          </v-btn>
+        </template>
       </nav>
 
       <template #append>

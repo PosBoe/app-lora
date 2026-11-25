@@ -69,6 +69,23 @@ describe('route guards', () => {
     expect(router.currentRoute.value.name).toBe('Home')
   })
 
+  it('keeps an admin out of the member pages', async () => {
+    await signIn(admin)
+    const router = newRouter()
+    await router.push('/device-models')
+    expect(router.currentRoute.value.name).toBe('Organizations')
+    await router.push('/devices/5')
+    expect(router.currentRoute.value.name).toBe('Organizations')
+  })
+
+  it('lets a member open a device page', async () => {
+    await signIn(member)
+    const router = newRouter()
+    await router.push('/devices/5')
+    expect(router.currentRoute.value.name).toBe('Device')
+    expect(router.currentRoute.value.params.id).toBe('5')
+  })
+
   it('sends an admin from the home page to the organizations', async () => {
     await signIn(admin)
     const router = newRouter()

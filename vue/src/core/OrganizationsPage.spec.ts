@@ -17,6 +17,7 @@ const active: Organization = {
   name: 'Apă Canal',
   deactivated_at: null,
   created_at: '2026-11-25T10:00:00Z',
+  device_count: 12,
   users: [
     {
       id: 10,
@@ -36,6 +37,7 @@ const deactivated: Organization = {
   name: 'Gaz Nord',
   deactivated_at: '2026-11-25T12:00:00Z',
   created_at: '2026-11-24T10:00:00Z',
+  device_count: 0,
   users: [
     {
       id: 20,

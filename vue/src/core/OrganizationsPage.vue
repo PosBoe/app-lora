@@ -17,6 +17,7 @@ const headers = computed(() => [
   { title: t('organizations.login'), key: 'login', sortable: false },
   { title: t('organizations.profile'), key: 'profile', sortable: false },
   { title: t('organizations.lastLogin'), key: 'last_login', sortable: false },
+  { title: t('organizations.devices'), key: 'device_count', align: 'end' as const },
   { title: t('organizations.created'), key: 'created_at' },
   { title: t('organizations.actions'), key: 'actions', sortable: false, align: 'end' as const },
 ])

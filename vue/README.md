@@ -13,7 +13,8 @@ The web frontend: Vue 3, TypeScript, Vuetify, and UnoCSS, built with Vite.
 | `src/lib/i18n/`             | The Romanian and Russian messages; `ro.ts` is the schema `ru.ts` must match.        |
 | `src/use/`                  | Composables, auto-imported.                                                         |
 | `src/components/`           | Shared components, auto-imported by path.                                           |
-| `src/core/`                 | The core module: login, set password, home, and the admin organizations page.       |
+| `src/core/`                 | The core module: login, set password, and the admin organizations page.             |
+| `src/device/`               | The device module: the device list, the device page, and the device models.         |
 | `src/system/`               | The system module: the health page.                                                 |
 | `src/types/`                | Global type declarations.                                                           |
 | `packages.ts`               | The directories that auto-import scans.                                             |

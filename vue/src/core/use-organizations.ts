@@ -18,6 +18,7 @@ export interface Organization {
   name: string
   deactivated_at: string | null
   created_at: string
+  device_count: number
   users: Member[]
 }
 

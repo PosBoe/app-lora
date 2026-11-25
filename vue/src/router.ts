@@ -15,6 +15,8 @@ declare module 'vue-router' {
     public?: boolean
     // admin routes need an admin session.
     admin?: boolean
+    // member routes need a member of an organization; an admin goes home.
+    member?: boolean
   }
 }
 
@@ -34,7 +36,20 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/core/HomePage.vue'),
+    component: () => import('@/device/DevicesPage.vue'),
+    meta: { member: true },
+  },
+  {
+    path: '/devices/:id(\\d+)',
+    name: 'Device',
+    component: () => import('@/device/DevicePage.vue'),
+    meta: { member: true },
+  },
+  {
+    path: '/device-models',
+    name: 'DeviceModels',
+    component: () => import('@/device/DeviceModelsPage.vue'),
+    meta: { member: true },
   },
   {
     path: '/admin/organizations',
@@ -73,7 +88,8 @@ function homeFor(me: Me): RouteLocationRaw {
 
 // installGuards sends each navigation to a page the session may open:
 // nobody logged in goes to the login page, a temporary password goes to the
-// set-password page, and a member never opens an admin page.
+// set-password page, a member never opens an admin page, and an admin never
+// opens a member page.
 export function installGuards(router: Router) {
   router.beforeEach(async (to) => {
     const me = await useSession().load()
@@ -93,7 +109,7 @@ export function installGuards(router: Router) {
     if (to.meta.admin && !me.is_admin) {
       return { name: 'Home' }
     }
-    if (to.name === 'Home' && me.is_admin) {
+    if (to.meta.member && me.is_admin) {
       return homeFor(me)
     }
     return true
