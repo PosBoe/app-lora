@@ -81,7 +81,7 @@ The binary is `cmd/lora`:
 | `bootstrap/` | CLI root, config loading, logging, the fx application. |
 | `system/` | Health endpoint; the reference shape of a domain package. |
 | `core/` | Organizations, users, the admin, logins, and sessions. See `core/README.md`. |
-| `device/` | The device context. It holds its glossary and design; it has no code yet. |
+| `device/` | The device registry: devices and device models. See `device/README.md`. |
 | `pkg/` | Shared, domain-free packages, for example `appconf`, `pgdb`, `httpkit`, `clock`, `pgtest`. |
 | `config/` | `*.default.yml` templates; `task init` copies them. |
 | `vue/` | The frontend. See `vue/README.md`. |
