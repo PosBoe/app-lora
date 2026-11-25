@@ -67,8 +67,9 @@ _Avoid_: raw data, data, frame
 
 **Unmatched uplink**:
 An uplink whose DevEUI matches no device of its integration's organization. The platform keeps
-it. When the organization adds a device with that DevEUI, the uplink becomes an uplink of that
-device. This term is coined here: ChirpStack and TTN do not keep such uplinks.
+it for 30 days. When the organization adds a device with that DevEUI in that time, the uplink
+becomes an uplink of that device. This term is coined here: ChirpStack and TTN do not keep such
+uplinks.
 _Avoid_: orphan uplink, unknown uplink
 
 ### Decoding

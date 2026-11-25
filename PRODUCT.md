@@ -20,7 +20,9 @@ The words in this file have the meanings that the glossaries give them:
 
 - **Ingest.** Receive uplinks through integrations from ChirpStack and TTN. The integration
   gives the organization. Find the device by its DevEUI in that organization. Always store the
-  payload. Keep an unmatched uplink, so a device added later gets its earlier history.
+  payload. Keep an unmatched uplink for 30 days, so a device added later gets its earlier
+  history. Show the users of the organization a warning that names each DevEUI with unmatched
+  uplinks.
 - **Decode.** Decode the payload with the decoder of the device model. Get the pulse count and
   the alarm flags. If the device model has no decoder, keep the payload only. When a decoder is
   added, decode the stored history again.
