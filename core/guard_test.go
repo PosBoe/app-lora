@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"testing"
@@ -15,7 +16,9 @@ func TestGuardMember(t *testing.T) {
 	env := newTestEnv(t)
 	env.mux.Handle("GET /api/v1/test/member", env.guard().Member(func(w http.ResponseWriter, req *http.Request) error {
 		c, ok := CallerFrom(req.Context())
-		require.True(t, ok)
+		if !ok {
+			return errors.New("no caller in the context")
+		}
 		httpkit.JSON(w, http.StatusOK, c)
 		return nil
 	}))
