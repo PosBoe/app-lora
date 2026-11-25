@@ -57,7 +57,7 @@ _Avoid_: webhook (one kind of integration), connector, endpoint
 
 **Uplink**:
 One message from a device, as the network server sends it on: the DevEUI, the payload, the
-frame counter, the receive time, and the radio metadata.
+frame counter, and the receive time.
 _Avoid_: message, packet, frame, raw data, reading
 
 **Payload**:

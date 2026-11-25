@@ -50,6 +50,15 @@ The words in this file have the meanings that the glossaries give them:
 - Alarms come only from alarm flags in the decoded payload. An alarm is raised by the first
   uplink with its flag and cleared by the first decoded uplink without it.
 - The platform shows the raw pulse count. It does not convert pulses to m³ or litres.
+- A pulse count does not reset and does not overflow. It only increases.
+- Each integration has its own secret. The network server sends the secret in a request
+  header. A request without a valid secret is refused.
+- A device sends one to three uplinks per day.
+- The platform keeps the uplinks of each device for at least 10 years. The MVP deletes no
+  uplinks.
+- The platform keeps only the DevEUI, the payload, the frame counter, and the receive time of an
+  uplink. It does not keep the port or the radio metadata (RSSI, SNR).
+- A device stays in the organization that added it. It cannot move to another organization.
 - UI in Romanian and Russian. Times shown in Europe/Chisinau. Times stored in UTC.
 
 ## Non-goals
@@ -70,7 +79,4 @@ follows from it.
 
 ## Open questions
 
-- Does a pulse count reset or overflow? This decides how the chart treats a drop.
-- How does an integration authenticate its requests? A secret in the webhook URL, or a header?
-- How long are uplinks kept?
-- Who moves a device to another organization, and does its history move with it?
+- None.
