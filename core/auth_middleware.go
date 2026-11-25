@@ -120,8 +120,11 @@ func checkAccess(level access, p *principal) error {
 	return nil
 }
 
+// setCookie sends the session cookie. Secure follows the scheme of site.url,
+// because a browser drops a Secure cookie that a plain http dev server sets.
+// HttpOnly and SameSite are always set.
 func (m *authMiddleware) setCookie(w http.ResponseWriter, token string) {
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ //nolint:gosec // Secure follows site.url; see the doc comment
 		Name:     sessionCookieName,
 		Value:    token,
 		Path:     "/",
@@ -133,7 +136,7 @@ func (m *authMiddleware) setCookie(w http.ResponseWriter, token string) {
 }
 
 func (m *authMiddleware) clearCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(w, &http.Cookie{ //nolint:gosec // Secure follows site.url; see setCookie
 		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
