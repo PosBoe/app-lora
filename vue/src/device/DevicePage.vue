@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { formatDateTime } from '@/lib/i18n'
+
 import DeviceDialog from './DeviceDialog.vue'
+import { displayPayload, UPLINKS_PER_PAGE, useDeviceUplinks } from './use-uplinks'
 import { modelLabel } from './use-device-models'
 import {
   archiveDevice,
@@ -10,6 +13,8 @@ import {
 } from './use-devices'
 
 const route = useRoute()
+const { t } = useI18n()
+const { language } = useLanguage()
 const errorMessage = useErrorMessage()
 const { copy, copied } = useClipboard({ legacy: true })
 
@@ -32,6 +37,23 @@ async function reload() {
 }
 
 watch(id, reload, { immediate: true })
+
+const {
+  uplinks,
+  total: uplinkTotal,
+  loading: uplinksLoading,
+  error: uplinksError,
+  load: loadUplinks,
+} = useDeviceUplinks()
+const uplinkPage = shallowRef(1)
+
+watch([id, uplinkPage], ([deviceId, page]) => loadUplinks(deviceId, page), { immediate: true })
+
+const uplinkHeaders = computed(() => [
+  { title: t('uplinks.time'), key: 'received_at', sortable: false },
+  { title: t('uplinks.fCnt'), key: 'f_cnt', sortable: false, align: 'end' as const },
+  { title: t('uplinks.payload'), key: 'payload_hex', sortable: false },
+])
 
 const editOpen = shallowRef(false)
 const busy = shallowRef(false)
@@ -118,6 +140,10 @@ async function setArchived(archived: boolean) {
               @click="copy(displayDevEUI(device.dev_eui))"
             />
           </dd>
+          <dt class="text-muted">{{ $t('devices.lastUplink') }}</dt>
+          <dd data-test="device-last-uplink">
+            {{ device.last_uplink_at ? formatDateTime(device.last_uplink_at, language) : '—' }}
+          </dd>
           <dt class="text-muted">{{ $t('devices.model') }}</dt>
           <dd data-test="device-model">{{ modelLabel(device.device_model) }}</dd>
           <dt class="text-muted">{{ $t('devices.meterType') }}</dt>
@@ -154,8 +180,40 @@ async function setArchived(archived: boolean) {
       </div>
 
       <div class="app-card" data-test="section-uplinks">
-        <div class="app-card-header">{{ $t('devices.sections.uplinks') }}</div>
-        <p class="p-6 text-center text-muted">{{ $t('devices.sections.noUplinks') }}</p>
+        <div class="app-card-header">
+          {{ $t('devices.sections.uplinks') }}
+          <span v-if="uplinkTotal" class="ml-1 text-muted">({{ uplinkTotal }})</span>
+        </div>
+        <p v-if="uplinksError" class="p-4 text-error">{{ errorMessage(uplinksError) }}</p>
+        <p
+          v-else-if="!uplinksLoading && uplinkTotal === 0"
+          class="p-6 text-center text-muted"
+          data-test="uplinks-empty"
+        >
+          {{ $t('devices.sections.noUplinks') }}
+        </p>
+        <v-data-table-server
+          v-else
+          v-model:page="uplinkPage"
+          :headers="uplinkHeaders"
+          :items="uplinks"
+          :items-length="uplinkTotal"
+          :loading="uplinksLoading"
+          :items-per-page="UPLINKS_PER_PAGE"
+          :items-per-page-options="[UPLINKS_PER_PAGE]"
+          item-value="id"
+          density="compact"
+          data-test="uplinks-table"
+        >
+          <template #[`item.received_at`]="{ item }">
+            <span class="text-body">{{ formatDateTime(item.received_at, language) }}</span>
+          </template>
+          <template #[`item.payload_hex`]="{ item }">
+            <span class="font-mono text-body" data-test="uplink-payload">
+              {{ displayPayload(item.payload_hex) }}
+            </span>
+          </template>
+        </v-data-table-server>
       </div>
 
       <DeviceDialog v-model="editOpen" :device="device" @saved="reload" />

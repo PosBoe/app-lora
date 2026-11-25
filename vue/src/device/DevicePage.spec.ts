@@ -17,8 +17,11 @@ describe('DevicePage', () => {
   })
 
   it('shows the device and says why each data section is empty', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue(
-      response(200, {
+    vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+      if (url === '/devices/7/uplinks') {
+        return response(200, { uplinks: [], total: 0 })
+      }
+      return response(200, {
         id: 7,
         dev_eui: '70b3d57ed0001234',
         name: 'Bloc A',
@@ -30,8 +33,9 @@ describe('DevicePage', () => {
         created_at: '',
         updated_at: '',
         groups: [{ id: 4, name: 'Botanica' }],
-      }),
-    )
+        last_uplink_at: null,
+      })
+    })
     const wrapper = mountApp(DevicePage)
     await wrapper.vm.$router.push('/devices/7')
     await flushPromises()
@@ -45,5 +49,38 @@ describe('DevicePage', () => {
       'Apar când modelul acestui device are un decodor.',
     )
     expect(wrapper.get('[data-test="section-uplinks"]').text()).toContain('Niciun uplink încă.')
+  })
+
+  it('lists the uplinks with the payload in hex bytes', async () => {
+    vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+      if (url === '/devices/7/uplinks') {
+        return response(200, {
+          uplinks: [
+            { id: 1, received_at: '2026-11-25T09:34:15Z', f_cnt: 42, payload_hex: '0175670201' },
+          ],
+          total: 1,
+        })
+      }
+      return response(200, {
+        id: 7,
+        dev_eui: '70b3d57ed0001234',
+        name: 'Bloc A',
+        device_model: { id: 3, vendor: 'Milesight', model: 'EM300-DI' },
+        meter_type: null,
+        address: null,
+        note: null,
+        archived_at: null,
+        created_at: '',
+        updated_at: '',
+        groups: [],
+        last_uplink_at: '2026-11-25T09:34:15Z',
+      })
+    })
+    const wrapper = mountApp(DevicePage)
+    await wrapper.vm.$router.push('/devices/7')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="uplink-payload"]').text()).toBe('01 75 67 02 01')
+    expect(wrapper.get('[data-test="device-last-uplink"]').text()).toContain('11:34')
   })
 })

@@ -163,6 +163,23 @@ export const ro = {
       ],
     },
   },
+  unmatched: {
+    summary: '{n} DevEUI-uri trimit date, dar nu sunt adăugate ca device-uri.',
+    explain:
+      'Uplink-urile lor se păstrează 30 de zile. Adaugă device-ul și își primește istoricul.',
+    show: 'Arată',
+    hide: 'Ascunde',
+    count: 'Uplink-uri',
+    last: 'Ultimul',
+    integration: 'Integrare',
+    left: 'Se șterg în',
+    days: '{n} zile',
+  },
+  uplinks: {
+    time: 'Ora',
+    fCnt: 'Frame counter',
+    payload: 'Payload (hex)',
+  },
   meterTypes: {
     water: 'Apă',
     gas: 'Gaz',

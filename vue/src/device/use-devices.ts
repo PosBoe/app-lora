@@ -17,6 +17,7 @@ export interface Device {
   archived_at: string | null
   created_at: string
   updated_at: string
+  last_uplink_at: string | null
   groups: { id: number; name: string }[]
 }
 

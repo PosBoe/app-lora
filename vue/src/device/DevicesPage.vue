@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type { LocationQuery } from 'vue-router'
 
+import { formatDateTime } from '@/lib/i18n'
+
 import DeviceDialog from './DeviceDialog.vue'
 import DeviceGroupDialog from './DeviceGroupDialog.vue'
+import UnmatchedWarning from './UnmatchedWarning.vue'
 import { useDeviceGroups } from './use-device-groups'
+import { useUnmatched } from './use-uplinks'
 import { modelLabel, useDeviceModels } from './use-device-models'
 import {
   archiveDevices,
@@ -20,6 +24,8 @@ const PER_PAGE = 50
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const { language } = useLanguage()
+const { unmatched } = useUnmatched()
 const errorMessage = useErrorMessage()
 const { devices, total, loading, error, load } = useDeviceList()
 const { models } = useDeviceModels()
@@ -121,6 +127,14 @@ function rowProps({ item }: { item: Device }) {
 //------------------------------------------------------------------------------
 
 const addOpen = shallowRef(false)
+// addDevEui fills the DevEUI of the add dialog when it opens from the
+// unmatched warning.
+const addDevEui = shallowRef('')
+
+function openAdd(devEui = '') {
+  addDevEui.value = devEui
+  addOpen.value = true
+}
 
 function onSaved(device: { id: number }) {
   void router.push({ name: 'Device', params: { id: device.id } })
@@ -200,7 +214,9 @@ async function confirmArchive() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl p-6">
+  <div class="mx-auto flex max-w-7xl flex-col gap-4 p-6">
+    <UnmatchedWarning :unmatched="unmatched" @add="openAdd" />
+
     <div class="app-card">
       <div class="app-card-header flex items-center justify-between gap-4">
         <span>
@@ -223,7 +239,7 @@ async function confirmArchive() {
             size="small"
             prepend-icon="mdi-plus"
             data-test="device-add"
-            @click="addOpen = true"
+            @click="openAdd()"
           >
             {{ $t('devices.add') }}
           </v-btn>
@@ -356,7 +372,7 @@ async function confirmArchive() {
       >
         <p class="text-muted">{{ $t('devices.empty') }}</p>
         <div class="flex gap-2">
-          <v-btn variant="flat" color="primary" prepend-icon="mdi-plus" @click="addOpen = true">
+          <v-btn variant="flat" color="primary" prepend-icon="mdi-plus" @click="openAdd()">
             {{ $t('devices.add') }}
           </v-btn>
           <v-btn
@@ -412,13 +428,16 @@ async function confirmArchive() {
         <template #[`item.address`]="{ item }">
           <span class="text-muted">{{ item.address }}</span>
         </template>
-        <template #[`item.last_uplink`]>
-          <span class="text-faint">—</span>
+        <template #[`item.last_uplink`]="{ item }">
+          <span v-if="item.last_uplink_at" class="text-muted">
+            {{ formatDateTime(item.last_uplink_at, language) }}
+          </span>
+          <span v-else class="text-faint">—</span>
         </template>
       </v-data-table-server>
     </div>
 
-    <DeviceDialog v-model="addOpen" @saved="onSaved" />
+    <DeviceDialog v-model="addOpen" :dev-eui="addDevEui" @saved="onSaved" />
 
     <DeviceGroupDialog
       v-model="newGroupOpen"

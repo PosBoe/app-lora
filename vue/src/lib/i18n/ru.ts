@@ -164,6 +164,22 @@ export const ru: Messages = {
       ],
     },
   },
+  unmatched: {
+    summary: 'DevEUI, которые присылают данные, но не добавлены как устройства: {n}.',
+    explain: 'Их uplink-и хранятся 30 дней. Добавьте устройство, и оно получит свою историю.',
+    show: 'Показать',
+    hide: 'Скрыть',
+    count: 'Uplink-и',
+    last: 'Последний',
+    integration: 'Интеграция',
+    left: 'Удалятся через',
+    days: '{n} дн.',
+  },
+  uplinks: {
+    time: 'Время',
+    fCnt: 'Frame counter',
+    payload: 'Payload (hex)',
+  },
   meterTypes: {
     water: 'Вода',
     gas: 'Газ',

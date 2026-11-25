@@ -29,6 +29,7 @@ const device: Device = {
   created_at: '',
   updated_at: '',
   groups: [],
+  last_uplink_at: null,
 }
 
 // byTest finds an element that the dialog teleported to the document body.

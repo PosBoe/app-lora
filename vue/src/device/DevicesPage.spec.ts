@@ -24,11 +24,16 @@ const device: Device = {
   created_at: '2026-11-25T10:00:00Z',
   updated_at: '2026-11-25T10:00:00Z',
   groups: [],
+  last_uplink_at: '2026-11-25T08:30:00Z',
 }
 
-// mockGet answers the device list and the device model list.
-function mockGet(devices: Device[], total = devices.length) {
+// mockGet answers the device list, the device models, the groups, and the
+// unmatched DevEUIs.
+function mockGet(devices: Device[], total = devices.length, unmatched: unknown[] = []) {
   return vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+    if (url === '/unmatched') {
+      return response(200, { dev_euis: unmatched })
+    }
     if (url === '/device-groups') {
       return response(200, { device_groups: [] })
     }
@@ -89,5 +94,29 @@ describe('DevicesPage', () => {
       page: 2,
       per_page: 50,
     })
+  })
+
+  it('offers to add each unmatched DevEUI with the DevEUI filled in', async () => {
+    mockGet([device], 1, [
+      {
+        dev_eui: '70b3d57ed0009999',
+        count: 3,
+        last_received_at: '2026-11-25T09:00:00Z',
+        integration_name: 'ChirpStack',
+        deletes_at: '2099-01-01T00:00:00Z',
+      },
+    ])
+    const wrapper = mountApp(DevicesPage, { attachTo: document.body })
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="unmatched-summary"]').text()).toContain('1 DevEUI-uri')
+    await wrapper.get('[data-test="unmatched-toggle"]').trigger('click')
+    await wrapper.get('[data-test="unmatched-add-70b3d57ed0009999"]').trigger('click')
+    await flushPromises()
+
+    const input = document.body.querySelector<HTMLInputElement>('[data-test="dev-eui-input"] input')
+    expect(input?.value).toBe('70B3D57ED0009999')
+    wrapper.unmount()
+    document.body.innerHTML = ''
   })
 })
