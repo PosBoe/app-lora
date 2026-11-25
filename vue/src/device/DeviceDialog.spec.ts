@@ -28,6 +28,7 @@ const device: Device = {
   archived_at: null,
   created_at: '',
   updated_at: '',
+  groups: [],
 }
 
 // byTest finds an element that the dialog teleported to the document body.
@@ -43,6 +44,9 @@ describe('DeviceDialog', () => {
 
   it('offers to restore an archived device that has the DevEUI', async () => {
     vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+      if (url === '/device-groups') {
+        return response(200, { device_groups: [] })
+      }
       if (url === '/device-models') {
         return response(200, { device_models: [] })
       }

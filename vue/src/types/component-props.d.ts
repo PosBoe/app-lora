@@ -21,5 +21,7 @@ declare module 'vue' {
     // Native attributes of the rendered element.
     title?: string
     type?: string
+    // The file types that v-file-input passes to its native input.
+    accept?: string
   }
 }

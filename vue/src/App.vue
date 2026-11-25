@@ -38,6 +38,9 @@ async function signOut() {
           <v-btn :to="{ name: 'Home' }" exact variant="text" size="small" data-test="nav-devices">
             {{ $t('nav.devices') }}
           </v-btn>
+          <v-btn :to="{ name: 'DeviceGroups' }" variant="text" size="small" data-test="nav-groups">
+            {{ $t('nav.groups') }}
+          </v-btn>
           <v-btn :to="{ name: 'DeviceModels' }" variant="text" size="small" data-test="nav-models">
             {{ $t('nav.models') }}
           </v-btn>

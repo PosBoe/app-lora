@@ -17,6 +17,7 @@ export interface Device {
   archived_at: string | null
   created_at: string
   updated_at: string
+  groups: { id: number; name: string }[]
 }
 
 // DeviceInput mirrors deviceRequest in device/device_handler.go. An empty
@@ -28,6 +29,7 @@ export interface DeviceInput {
   meter_type: MeterType | ''
   address: string
   note: string
+  group_ids: number[]
 }
 
 // DeviceFilter is the query of the device list. The list page keeps it in
@@ -35,6 +37,7 @@ export interface DeviceInput {
 export interface DeviceFilter {
   q: string
   modelId: number | null
+  groupId: number | null
   meterType: MeterType | null
   archived: boolean
   page: number
@@ -62,6 +65,7 @@ export function useDeviceList() {
         params: {
           q: filter.q || undefined,
           model_id: filter.modelId ?? undefined,
+          group_id: filter.groupId ?? undefined,
           meter_type: filter.meterType ?? undefined,
           archived: filter.archived ? 'true' : undefined,
           page: filter.page,

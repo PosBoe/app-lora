@@ -2,6 +2,8 @@
 import type { LocationQuery } from 'vue-router'
 
 import DeviceDialog from './DeviceDialog.vue'
+import DeviceGroupDialog from './DeviceGroupDialog.vue'
+import { useDeviceGroups } from './use-device-groups'
 import { modelLabel, useDeviceModels } from './use-device-models'
 import {
   archiveDevices,
@@ -21,16 +23,19 @@ const { t } = useI18n()
 const errorMessage = useErrorMessage()
 const { devices, total, loading, error, load } = useDeviceList()
 const { models } = useDeviceModels()
+const { groups, create: createGroup, addDevices, removeDevices } = useDeviceGroups()
 
 // The filter lives in the URL, so the back button and a shared link keep it.
 function filterOf(query: LocationQuery): DeviceFilter {
   const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : '')
   const modelId = Number(text('model'))
+  const groupId = Number(text('group'))
   const page = Number(text('page'))
   const meterType = text('type')
   return {
     q: text('q'),
     modelId: modelId > 0 ? modelId : null,
+    groupId: groupId > 0 ? groupId : null,
     meterType: (METER_TYPES as string[]).includes(meterType) ? (meterType as MeterType) : null,
     archived: text('archived') === '1',
     page: page > 1 ? page : 1,
@@ -51,6 +56,7 @@ function setFilter(change: Partial<DeviceFilter>) {
     query: {
       q: next.q || undefined,
       model: next.modelId ?? undefined,
+      group: next.groupId ?? undefined,
       type: next.meterType ?? undefined,
       archived: next.archived ? '1' : undefined,
       page: next.page > 1 ? next.page : undefined,
@@ -73,19 +79,29 @@ const headers = computed(() => [
   { title: t('devices.name'), key: 'name', sortable: false },
   { title: t('devices.devEui'), key: 'dev_eui', sortable: false },
   { title: t('devices.model'), key: 'model', sortable: false },
+  { title: t('devices.groups'), key: 'groups', sortable: false },
   { title: t('devices.meterType'), key: 'meter_type', sortable: false },
   { title: t('devices.address'), key: 'address', sortable: false },
   { title: t('devices.lastUplink'), key: 'last_uplink', sortable: false },
 ])
 
 const modelItems = computed(() => models.value.map((m) => ({ title: modelLabel(m), value: m.id })))
+const groupItems = computed(() =>
+  groups.value.map((g) => ({ title: `${g.name} (${g.device_count})`, value: g.id })),
+)
 const meterItems = computed(() =>
   METER_TYPES.map((v) => ({ title: t(`meterTypes.${v}`), value: v })),
 )
 
 const filtered = computed(
   () =>
-    !!(filter.value.q || filter.value.modelId || filter.value.meterType || filter.value.archived),
+    !!(
+      filter.value.q ||
+      filter.value.modelId ||
+      filter.value.groupId ||
+      filter.value.meterType ||
+      filter.value.archived
+    ),
 )
 
 // rowProps makes a whole row open its device page. Vuetify 4 has no
@@ -119,6 +135,54 @@ function askArchive() {
   archiveOpen.value = true
 }
 
+//------------------------------------------------------------------------------
+
+const groupBusy = shallowRef(false)
+const groupError = shallowRef('')
+
+// changeGroup adds the selected devices to a group, or removes them from it
+// when remove is true.
+async function changeGroup(groupId: number, remove = false) {
+  groupBusy.value = true
+  groupError.value = ''
+  try {
+    if (remove) {
+      await removeDevices(groupId, selected.value)
+    } else {
+      await addDevices(groupId, selected.value)
+    }
+    selected.value = []
+    await load(filter.value)
+  } catch (err) {
+    groupError.value = errorMessage(err)
+  } finally {
+    groupBusy.value = false
+  }
+}
+
+const newGroupOpen = shallowRef(false)
+const newGroupError = shallowRef('')
+
+function openNewGroup() {
+  newGroupError.value = ''
+  newGroupOpen.value = true
+}
+
+async function submitNewGroup(name: string) {
+  groupBusy.value = true
+  newGroupError.value = ''
+  try {
+    const created = await createGroup(name)
+    newGroupOpen.value = false
+    groupBusy.value = false
+    await changeGroup(created.id)
+  } catch (err) {
+    newGroupError.value = errorMessage(err)
+  } finally {
+    groupBusy.value = false
+  }
+}
+
 async function confirmArchive() {
   archiving.value = true
   archiveError.value = ''
@@ -143,16 +207,27 @@ async function confirmArchive() {
           {{ $t('devices.title') }}
           <span class="ml-1 text-muted" data-test="devices-total">({{ total }})</span>
         </span>
-        <v-btn
-          variant="flat"
-          color="primary"
-          size="small"
-          prepend-icon="mdi-plus"
-          data-test="device-add"
-          @click="addOpen = true"
-        >
-          {{ $t('devices.add') }}
-        </v-btn>
+        <div class="flex gap-2">
+          <v-btn
+            :to="{ name: 'DeviceImport' }"
+            variant="text"
+            size="small"
+            prepend-icon="mdi-file-upload-outline"
+            data-test="device-import"
+          >
+            {{ $t('import.open') }}
+          </v-btn>
+          <v-btn
+            variant="flat"
+            color="primary"
+            size="small"
+            prepend-icon="mdi-plus"
+            data-test="device-add"
+            @click="addOpen = true"
+          >
+            {{ $t('devices.add') }}
+          </v-btn>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-3 border-b border-subtle p-4">
@@ -181,6 +256,18 @@ async function confirmArchive() {
           @update:model-value="(v: number | null) => setFilter({ modelId: v })"
         />
         <v-select
+          :model-value="filter.groupId"
+          :items="groupItems"
+          :placeholder="$t('devices.allGroups')"
+          clearable
+          density="compact"
+          variant="outlined"
+          hide-details
+          class="w-56 flex-none"
+          data-test="filter-group"
+          @update:model-value="(v: number | null) => setFilter({ groupId: v })"
+        />
+        <v-select
           :model-value="filter.meterType"
           :items="meterItems"
           :placeholder="$t('devices.allTypes')"
@@ -201,16 +288,60 @@ async function confirmArchive() {
           data-test="filter-archived"
           @update:model-value="(v: boolean | null) => setFilter({ archived: !!v })"
         />
-        <v-btn
-          v-if="selected.length && !filter.archived"
-          variant="tonal"
-          size="small"
-          prepend-icon="mdi-archive-outline"
-          data-test="archive-selected"
-          @click="askArchive"
-        >
-          {{ $t('devices.archiveSelected', { n: selected.length }) }}
-        </v-btn>
+        <template v-if="selected.length && !filter.archived">
+          <v-menu location="bottom start">
+            <template #activator="{ props: menu }">
+              <v-btn
+                v-bind="menu"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-folder-plus-outline"
+                :loading="groupBusy"
+                data-test="add-to-group"
+              >
+                {{ $t('devices.addToGroup', { n: selected.length }) }}
+              </v-btn>
+            </template>
+            <v-list density="compact">
+              <v-list-item
+                v-for="g in groups"
+                :key="g.id"
+                :title="g.name"
+                :data-test="`add-to-group-${g.id}`"
+                @click="changeGroup(g.id)"
+              />
+              <v-list-item
+                prepend-icon="mdi-plus"
+                :title="$t('groups.add')"
+                data-test="add-to-new-group"
+                @click="openNewGroup"
+              />
+            </v-list>
+          </v-menu>
+          <v-btn
+            v-if="filter.groupId"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-folder-remove-outline"
+            :loading="groupBusy"
+            data-test="remove-from-group"
+            @click="changeGroup(filter.groupId, true)"
+          >
+            {{ $t('devices.removeFromGroup', { n: selected.length }) }}
+          </v-btn>
+          <v-btn
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-archive-outline"
+            data-test="archive-selected"
+            @click="askArchive"
+          >
+            {{ $t('devices.archiveSelected', { n: selected.length }) }}
+          </v-btn>
+        </template>
+        <p v-if="groupError" class="w-full text-error" data-test="group-action-error">
+          {{ groupError }}
+        </p>
       </div>
 
       <div v-if="error" class="flex items-center gap-3 p-4">
@@ -224,9 +355,18 @@ async function confirmArchive() {
         data-test="devices-empty"
       >
         <p class="text-muted">{{ $t('devices.empty') }}</p>
-        <v-btn variant="flat" color="primary" prepend-icon="mdi-plus" @click="addOpen = true">
-          {{ $t('devices.add') }}
-        </v-btn>
+        <div class="flex gap-2">
+          <v-btn variant="flat" color="primary" prepend-icon="mdi-plus" @click="addOpen = true">
+            {{ $t('devices.add') }}
+          </v-btn>
+          <v-btn
+            :to="{ name: 'DeviceImport' }"
+            variant="tonal"
+            prepend-icon="mdi-file-upload-outline"
+          >
+            {{ $t('import.open') }}
+          </v-btn>
+        </div>
       </div>
 
       <v-data-table-server
@@ -257,6 +397,13 @@ async function confirmArchive() {
         <template #[`item.model`]="{ item }">
           <span class="text-body">{{ modelLabel(item.device_model) }}</span>
         </template>
+        <template #[`item.groups`]="{ item }">
+          <div class="flex flex-wrap gap-1 py-1">
+            <v-chip v-for="g in item.groups" :key="g.id" size="x-small" variant="tonal">
+              {{ g.name }}
+            </v-chip>
+          </div>
+        </template>
         <template #[`item.meter_type`]="{ item }">
           <span v-if="item.meter_type" class="text-body">
             {{ $t(`meterTypes.${item.meter_type}`) }}
@@ -272,6 +419,14 @@ async function confirmArchive() {
     </div>
 
     <DeviceDialog v-model="addOpen" @saved="onSaved" />
+
+    <DeviceGroupDialog
+      v-model="newGroupOpen"
+      :title="$t('groups.createTitle')"
+      :loading="groupBusy"
+      :error="newGroupError"
+      @submit="submitNewGroup"
+    />
 
     <ConfirmDialog
       v-model="archiveOpen"

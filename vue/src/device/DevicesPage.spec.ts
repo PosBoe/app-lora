@@ -23,11 +23,15 @@ const device: Device = {
   archived_at: null,
   created_at: '2026-11-25T10:00:00Z',
   updated_at: '2026-11-25T10:00:00Z',
+  groups: [],
 }
 
 // mockGet answers the device list and the device model list.
 function mockGet(devices: Device[], total = devices.length) {
   return vi.spyOn(api, 'get').mockImplementation(async (url: string) => {
+    if (url === '/device-groups') {
+      return response(200, { device_groups: [] })
+    }
     if (url === '/device-models') {
       return response(200, {
         device_models: [
@@ -69,13 +73,17 @@ describe('DevicesPage', () => {
     const get = mockGet([device], 1)
     const wrapper = mountApp(DevicesPage)
     const router = wrapper.vm.$router
-    await router.push({ path: '/', query: { q: 'bloc', model: '3', type: 'water', page: '2' } })
+    await router.push({
+      path: '/',
+      query: { q: 'bloc', model: '3', group: '4', type: 'water', page: '2' },
+    })
     await flushPromises()
 
     const listCalls = get.mock.calls.filter(([url]) => url === '/devices')
     expect(listCalls.at(-1)?.[1]?.params).toEqual({
       q: 'bloc',
       model_id: 3,
+      group_id: 4,
       meter_type: 'water',
       archived: undefined,
       page: 2,

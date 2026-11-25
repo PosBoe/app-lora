@@ -29,6 +29,7 @@ describe('DevicePage', () => {
         archived_at: '2026-11-25T10:00:00Z',
         created_at: '',
         updated_at: '',
+        groups: [{ id: 4, name: 'Botanica' }],
       }),
     )
     const wrapper = mountApp(DevicePage)
@@ -38,6 +39,7 @@ describe('DevicePage', () => {
     expect(wrapper.get('[data-test="device-title"]').text()).toBe('Bloc A')
     expect(wrapper.get('[data-test="device-dev-eui"]').text()).toBe('70B3D57ED0001234')
     expect(wrapper.get('[data-test="device-model"]').text()).toBe('Milesight EM300-DI')
+    expect(wrapper.get('[data-test="device-groups"]').text()).toBe('Botanica')
     expect(wrapper.find('[data-test="archived-banner"]').exists()).toBe(true)
     expect(wrapper.get('[data-test="section-pulses"]').text()).toContain(
       'Apar când modelul acestui device are un decodor.',

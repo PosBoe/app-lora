@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { apiErrorCode } from '@/lib/api'
 
+import DeviceGroupPicker from './DeviceGroupPicker.vue'
 import DeviceModelPicker from './DeviceModelPicker.vue'
 import {
   createDevice,
@@ -30,6 +31,7 @@ const modelId = shallowRef<number | null>(null)
 const meterType = shallowRef<MeterType | null>(null)
 const address = shallowRef('')
 const note = shallowRef('')
+const groupIds = shallowRef<number[]>([])
 
 const saving = shallowRef(false)
 const error = shallowRef('')
@@ -54,6 +56,7 @@ watch(
     meterType.value = d?.meter_type ?? null
     address.value = d?.address ?? ''
     note.value = d?.note ?? ''
+    groupIds.value = d?.groups.map((g) => g.id) ?? []
     error.value = ''
     archivedDevEUI.value = ''
   },
@@ -74,6 +77,7 @@ async function submit() {
     meter_type: meterType.value ?? ('' as const),
     address: address.value,
     note: note.value,
+    group_ids: groupIds.value,
   }
   try {
     const saved = props.device
@@ -156,6 +160,7 @@ async function restoreArchived() {
           hide-details
           data-test="address-input"
         />
+        <DeviceGroupPicker v-model="groupIds" />
         <v-textarea
           v-model="note"
           :label="$t('devices.note')"

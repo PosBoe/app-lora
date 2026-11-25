@@ -124,6 +124,19 @@ async function setArchived(archived: boolean) {
           <dd>{{ device.meter_type ? $t(`meterTypes.${device.meter_type}`) : '—' }}</dd>
           <dt class="text-muted">{{ $t('devices.address') }}</dt>
           <dd>{{ device.address ?? '—' }}</dd>
+          <dt class="text-muted">{{ $t('devices.groups') }}</dt>
+          <dd class="flex flex-wrap gap-1" data-test="device-groups">
+            <v-chip
+              v-for="g in device.groups"
+              :key="g.id"
+              size="small"
+              variant="tonal"
+              :to="{ name: 'Home', query: { group: g.id } }"
+            >
+              {{ g.name }}
+            </v-chip>
+            <span v-if="!device.groups.length">—</span>
+          </dd>
           <dt class="text-muted">{{ $t('devices.note') }}</dt>
           <dd class="whitespace-pre-line">{{ device.note ?? '—' }}</dd>
         </dl>
