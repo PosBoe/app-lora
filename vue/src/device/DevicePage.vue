@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { formatDateTime } from '@/lib/i18n'
 
+import DailyPulseChart from './DailyPulseChart.vue'
 import DeviceDialog from './DeviceDialog.vue'
+import PulseLineChart from './PulseLineChart.vue'
+import {
+  fetchAlarms,
+  fetchPulses,
+  formatDuration,
+  PULSE_RANGES,
+  type Alarm,
+  type PulseData,
+  type PulseRange,
+} from './use-readings'
 import { displayPayload, UPLINKS_PER_PAGE, useDeviceUplinks } from './use-uplinks'
 import { modelLabel } from './use-device-models'
 import {
@@ -75,6 +86,60 @@ async function setArchived(archived: boolean) {
     busy.value = false
   }
 }
+
+//------------------------------------------------------------------------------
+
+const range = shallowRef<PulseRange>(30)
+const pulses = shallowRef<PulseData>()
+const pulsesError = shallowRef<unknown>()
+
+async function loadPulses() {
+  pulsesError.value = undefined
+  try {
+    pulses.value = await fetchPulses(id.value, range.value)
+  } catch (err) {
+    pulsesError.value = err
+  }
+}
+
+const alarms = shallowRef<Alarm[]>([])
+const alarmTotal = shallowRef(0)
+const alarmPage = shallowRef(1)
+
+async function loadAlarms() {
+  try {
+    const data = await fetchAlarms(id.value, alarmPage.value)
+    alarms.value = data.alarms
+    alarmTotal.value = data.total
+  } catch {
+    alarms.value = []
+  }
+}
+
+// The readings load when the device has a decoder; they change with the
+// range, the page, and the device.
+watch(
+  [() => device.value?.device_model.has_decoder, id, range],
+  ([hasDecoder]) => hasDecoder && loadPulses(),
+  { immediate: true },
+)
+watch(
+  [() => device.value?.device_model.has_decoder, id, alarmPage],
+  ([hasDecoder]) => hasDecoder && loadAlarms(),
+  { immediate: true },
+)
+
+// dailyRows lists the days newest first for the table.
+const dailyRows = computed(() => [...(pulses.value?.days ?? [])].reverse())
+
+const alarmHeaders = computed(() => [
+  { title: t('alarms.kind'), key: 'kind', sortable: false },
+  { title: t('alarms.raised'), key: 'raised_at', sortable: false },
+  { title: t('alarms.cleared'), key: 'cleared_at', sortable: false },
+  { title: t('alarms.duration'), key: 'duration', sortable: false, align: 'end' as const },
+])
+
+const numbers = computed(() => new Intl.NumberFormat(language.value === 'ru' ? 'ru-MD' : 'ro-MD'))
 </script>
 
 <template>
@@ -109,7 +174,20 @@ async function setArchived(archived: boolean) {
 
       <div class="app-card">
         <div class="app-card-header flex items-center justify-between gap-4">
-          <span data-test="device-title">{{ device.name }}</span>
+          <span class="flex flex-wrap items-center gap-2">
+            <span data-test="device-title">{{ device.name }}</span>
+            <v-chip
+              v-for="kind in device.active_alarms"
+              :key="kind"
+              size="x-small"
+              color="error"
+              variant="flat"
+              prepend-icon="mdi-alert"
+              data-test="device-active-alarm"
+            >
+              {{ $t(`alarmKinds.${kind}`) }}
+            </v-chip>
+          </span>
           <div class="flex gap-2">
             <v-btn size="small" variant="text" prepend-icon="mdi-pencil" @click="editOpen = true">
               {{ $t('devices.edit') }}
@@ -170,13 +248,111 @@ async function setArchived(archived: boolean) {
       </div>
 
       <div class="app-card" data-test="section-pulses">
-        <div class="app-card-header">{{ $t('devices.sections.pulses') }}</div>
-        <p class="p-6 text-center text-muted">{{ $t('devices.sections.needsDecoder') }}</p>
+        <div class="app-card-header flex flex-wrap items-center justify-between gap-3">
+          <span>{{ $t('devices.sections.pulses') }}</span>
+          <v-btn-toggle
+            v-if="device.device_model.has_decoder"
+            v-model="range"
+            mandatory
+            density="compact"
+            variant="text"
+            divided
+            class="border border-subtle"
+            data-test="pulse-range"
+          >
+            <v-btn v-for="r in PULSE_RANGES" :key="r" :value="r" size="small">
+              {{ $t('pulses.range', { n: r }) }}
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+        <p
+          v-if="!device.device_model.has_decoder"
+          class="p-6 text-center text-muted"
+          data-test="pulses-no-decoder"
+        >
+          {{ $t('devices.sections.needsDecoder') }}
+        </p>
+        <p v-else-if="pulsesError" class="p-4 text-error">{{ errorMessage(pulsesError) }}</p>
+        <p
+          v-else-if="pulses && !pulses.points.length"
+          class="p-6 text-center text-muted"
+          data-test="pulses-empty"
+        >
+          {{ $t('pulses.empty') }}
+        </p>
+        <div v-else-if="pulses" class="flex flex-col gap-6 p-4">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div>
+              <div class="mb-2 text-sm text-muted">{{ $t('pulses.reported') }}</div>
+              <PulseLineChart :points="pulses.points" :language="language" />
+            </div>
+            <div>
+              <div class="mb-2 text-sm text-muted">{{ $t('pulses.perDay') }}</div>
+              <DailyPulseChart :days="pulses.days" :language="language" />
+            </div>
+          </div>
+          <table class="w-full text-sm" data-test="daily-table">
+            <thead class="text-left text-muted">
+              <tr>
+                <th class="py-1 font-normal">{{ $t('pulses.day') }}</th>
+                <th class="py-1 text-right font-normal">{{ $t('pulses.last') }}</th>
+                <th class="py-1 text-right font-normal">{{ $t('pulses.delta') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in dailyRows" :key="d.day" class="border-t border-subtle text-body">
+                <td class="py-1">{{ d.day }}</td>
+                <td class="py-1 text-right font-mono">{{ numbers.format(d.last) }}</td>
+                <td class="py-1 text-right font-mono" data-test="daily-delta">
+                  {{ d.delta === null ? '—' : numbers.format(d.delta) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="app-card" data-test="section-alarms">
-        <div class="app-card-header">{{ $t('devices.sections.alarms') }}</div>
-        <p class="p-6 text-center text-muted">{{ $t('devices.sections.needsDecoder') }}</p>
+        <div class="app-card-header">
+          {{ $t('devices.sections.alarms') }}
+          <span v-if="alarmTotal" class="ml-1 text-muted">({{ alarmTotal }})</span>
+        </div>
+        <p v-if="!device.device_model.has_decoder" class="p-6 text-center text-muted">
+          {{ $t('devices.sections.needsDecoder') }}
+        </p>
+        <p v-else-if="!alarmTotal" class="p-6 text-center text-muted" data-test="alarms-empty">
+          {{ $t('alarms.empty') }}
+        </p>
+        <v-data-table-server
+          v-else
+          v-model:page="alarmPage"
+          :headers="alarmHeaders"
+          :items="alarms"
+          :items-length="alarmTotal"
+          :items-per-page="UPLINKS_PER_PAGE"
+          :items-per-page-options="[UPLINKS_PER_PAGE]"
+          item-value="id"
+          density="compact"
+          data-test="alarms-table"
+        >
+          <template #[`item.kind`]="{ item }">
+            <span class="text-body" data-test="alarm-kind">{{
+              $t(`alarmKinds.${item.kind}`)
+            }}</span>
+          </template>
+          <template #[`item.raised_at`]="{ item }">
+            {{ formatDateTime(item.raised_at, language) }}
+          </template>
+          <template #[`item.cleared_at`]="{ item }">
+            <span v-if="item.cleared_at">{{ formatDateTime(item.cleared_at, language) }}</span>
+            <v-chip v-else size="x-small" color="error" variant="flat" data-test="alarm-active">
+              {{ $t('alarms.active') }}
+            </v-chip>
+          </template>
+          <template #[`item.duration`]="{ item }">
+            <span class="text-muted">{{ formatDuration(item.raised_at, item.cleared_at) }}</span>
+          </template>
+        </v-data-table-server>
       </div>
 
       <div class="app-card" data-test="section-uplinks">

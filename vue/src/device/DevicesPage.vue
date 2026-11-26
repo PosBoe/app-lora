@@ -83,6 +83,7 @@ watch(filter, () => {
 
 const headers = computed(() => [
   { title: t('devices.name'), key: 'name', sortable: false },
+  { title: t('devices.alarms'), key: 'alarms', sortable: false },
   { title: t('devices.devEui'), key: 'dev_eui', sortable: false },
   { title: t('devices.model'), key: 'model', sortable: false },
   { title: t('devices.groups'), key: 'groups', sortable: false },
@@ -406,6 +407,20 @@ async function confirmArchive() {
       >
         <template #[`item.name`]="{ item }">
           <span class="text-strong" data-test="device-row-name">{{ item.name }}</span>
+        </template>
+        <template #[`item.alarms`]="{ item }">
+          <div class="flex flex-wrap gap-1 py-1">
+            <v-chip
+              v-for="kind in item.active_alarms"
+              :key="kind"
+              size="x-small"
+              color="error"
+              variant="flat"
+              data-test="row-active-alarm"
+            >
+              {{ $t(`alarmKinds.${kind}`) }}
+            </v-chip>
+          </div>
         </template>
         <template #[`item.dev_eui`]="{ item }">
           <span class="font-mono text-body">{{ displayDevEUI(item.dev_eui) }}</span>

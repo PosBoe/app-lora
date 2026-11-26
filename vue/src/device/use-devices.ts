@@ -10,7 +10,7 @@ export interface Device {
   id: number
   dev_eui: string
   name: string
-  device_model: { id: number; vendor: string; model: string }
+  device_model: { id: number; vendor: string; model: string; has_decoder: boolean }
   meter_type: MeterType | null
   address: string | null
   note: string | null
@@ -19,6 +19,7 @@ export interface Device {
   updated_at: string
   last_uplink_at: string | null
   groups: { id: number; name: string }[]
+  active_alarms: string[]
 }
 
 // DeviceInput mirrors deviceRequest in device/device_handler.go. An empty

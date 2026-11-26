@@ -21,7 +21,7 @@ const device: Device = {
   id: 7,
   dev_eui: '70b3d57ed0001234',
   name: 'Bloc A',
-  device_model: { id: 3, vendor: 'Milesight', model: 'EM300-DI' },
+  device_model: { id: 3, vendor: 'Milesight', model: 'EM300-DI', has_decoder: false },
   meter_type: null,
   address: null,
   note: null,
@@ -29,6 +29,7 @@ const device: Device = {
   created_at: '',
   updated_at: '',
   groups: [],
+  active_alarms: [],
   last_uplink_at: null,
 }
 

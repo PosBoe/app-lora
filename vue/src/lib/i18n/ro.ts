@@ -41,6 +41,7 @@ export const ro = {
   },
   devices: {
     title: 'Dispozitivele mele',
+    alarms: 'Alarme',
     groups: 'Grupuri',
     allGroups: 'Toate grupurile',
     addToGroup: 'Adaugă la grup ({n})',
@@ -189,6 +190,30 @@ export const ro = {
     noDecoder: 'Fără decodor',
     decoding: 'se decodează {n} uplink-uri…',
     empty: 'Nicio organizație nu are încă modele.',
+  },
+  pulses: {
+    range: '{n} zile',
+    reported: 'Numărul raportat de modul',
+    perDay: 'Impulsuri pe zi',
+    day: 'Ziua',
+    last: 'Ultima valoare',
+    delta: 'Impulsuri în zi',
+    empty: 'Niciun uplink decodat în această perioadă.',
+  },
+  alarms: {
+    kind: 'Alarmă',
+    raised: 'Pornită',
+    cleared: 'Oprită',
+    duration: 'Durată',
+    active: 'activă',
+    empty: 'Nicio alarmă până acum.',
+  },
+  alarmKinds: {
+    low_battery: 'Baterie descărcată',
+    tamper: 'Magnet / tamper',
+    leak: 'Scurgere',
+    reverse_flow: 'Flux invers',
+    cable_cut: 'Cablu tăiat',
   },
   meterTypes: {
     water: 'Apă',

@@ -17,9 +17,15 @@ importers:
       axios:
         specifier: ^1.20.0
         version: 1.21.1(debug@4.4.3)
+      chart.js:
+        specifier: ^4.6.2
+        version: 4.6.2
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@6.0.3)
+      vue-chartjs:
+        specifier: ^5.3.7
+        version: 5.3.7(chart.js@4.6.2)(vue@3.5.43(typescript@6.0.3))
       vue-i18n:
         specifier: ^11.4.23
         version: 11.4.23(vue@3.5.43(typescript@6.0.3))
@@ -299,6 +305,9 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@kurkle/color@0.6.6':
+    resolution: {integrity: sha512-Bd1NjGyoe27ExXRIBu13YymFP6k/wFxpUkX97Z3RlofLFV43nECB2G8vETZzcZzz2Ct2oRzwYElX65lxyi5UNg==}
 
   '@mdi/font@7.4.47':
     resolution: {integrity: sha512-43MtGpd585SNzHZPcYowu/84Vz2a2g31TvPMTm9uTiCSWzaheQySUcSyUH/46fPnuPQWof2yd0pGBtzee/IQWw==}
@@ -1116,6 +1125,10 @@ packages:
   chai@6.3.0:
     resolution: {integrity: sha512-XWAtwJ6OHO+tj0EKCs0Y2UamnyOxseZWltU4x2U2wh8g4AigdjwvtUjvLP2tqkA/avxHEtzxNaqGq/YGNwckKg==}
     engines: {node: '>=18'}
+
+  chart.js@4.6.2:
+    resolution: {integrity: sha512-xachB+pPHjp0syJi7llUBA1w3kMYl6NF3o7eVrvjnWCT+IB2zMaF2pX5UYDiwbbfsioFEIRnAjreNOMsGj5TIA==}
+    engines: {pnpm: '>=12'}
 
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
@@ -2239,6 +2252,12 @@ packages:
   vscode-uri@3.2.0:
     resolution: {integrity: sha512-m2gXo3bn0G1kT9InzMf07fTbqMbGtyckj3bH5ktLO+1Ssv+yiATZ4dhwaQv9UZWxJh6E9IFGnQyjgWVDWVBDrg==}
 
+  vue-chartjs@5.3.7:
+    resolution: {integrity: sha512-WzE556j2uKfJVlCDwfQIgTfrC9MDRCC+tlmY+VNA1nNIt0quomxJUBpVd0raT4e/ti9AfZH4u6VtSC76OKLUHg==}
+    peerDependencies:
+      chart.js: ^4.1.1
+      vue: ^3.0.0-0 || ^2.7.0
+
   vue-component-type-helpers@3.3.14:
     resolution: {integrity: sha512-Pq3+OnbCiPCHk0R7KSZrx+j/XXaUn2kSQ1epxq60w8CPbByLjC1EJgV51n4WY851sTXUVzsNMuitywdkdVyKjA==}
 
@@ -2545,6 +2564,8 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@kurkle/color@0.6.6': {}
 
   '@mdi/font@7.4.47': {}
 
@@ -3379,6 +3400,10 @@ snapshots:
       function-bind: 1.1.2
 
   chai@6.3.0: {}
+
+  chart.js@4.6.2:
+    dependencies:
+      '@kurkle/color': 0.6.6
 
   chokidar@5.0.0:
     dependencies:
@@ -4436,6 +4461,11 @@ snapshots:
       - msw
 
   vscode-uri@3.2.0: {}
+
+  vue-chartjs@5.3.7(chart.js@4.6.2)(vue@3.5.43(typescript@6.0.3)):
+    dependencies:
+      chart.js: 4.6.2
+      vue: 3.5.43(typescript@6.0.3)
 
   vue-component-type-helpers@3.3.14: {}
 

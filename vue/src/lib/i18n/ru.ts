@@ -42,6 +42,7 @@ export const ru: Messages = {
   },
   devices: {
     title: 'Мои устройства',
+    alarms: 'Тревоги',
     groups: 'Группы',
     allGroups: 'Все группы',
     addToGroup: 'В группу ({n})',
@@ -189,6 +190,30 @@ export const ru: Messages = {
     noDecoder: 'Без декодера',
     decoding: 'декодируется uplink-ов: {n}…',
     empty: 'Ни у одной организации пока нет моделей.',
+  },
+  pulses: {
+    range: '{n} дн.',
+    reported: 'Значение, переданное модулем',
+    perDay: 'Импульсы за день',
+    day: 'День',
+    last: 'Последнее значение',
+    delta: 'Импульсов за день',
+    empty: 'За этот период нет декодированных uplink-ов.',
+  },
+  alarms: {
+    kind: 'Тревога',
+    raised: 'Начало',
+    cleared: 'Конец',
+    duration: 'Длительность',
+    active: 'активна',
+    empty: 'Тревог пока не было.',
+  },
+  alarmKinds: {
+    low_battery: 'Разряд батареи',
+    tamper: 'Магнит / вскрытие',
+    leak: 'Утечка',
+    reverse_flow: 'Обратный поток',
+    cable_cut: 'Обрыв кабеля',
   },
   meterTypes: {
     water: 'Вода',

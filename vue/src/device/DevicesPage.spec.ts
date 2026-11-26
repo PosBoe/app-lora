@@ -16,7 +16,7 @@ const device: Device = {
   id: 7,
   dev_eui: '70b3d57ed0001234',
   name: 'Bloc A',
-  device_model: { id: 3, vendor: 'Milesight', model: 'EM300-DI' },
+  device_model: { id: 3, vendor: 'Milesight', model: 'EM300-DI', has_decoder: false },
   meter_type: 'water',
   address: 'str. Mare 1',
   note: null,
@@ -24,6 +24,7 @@ const device: Device = {
   created_at: '2026-11-25T10:00:00Z',
   updated_at: '2026-11-25T10:00:00Z',
   groups: [],
+  active_alarms: [],
   last_uplink_at: '2026-11-25T08:30:00Z',
 }
 
