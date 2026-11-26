@@ -59,7 +59,12 @@ export function useDeviceList() {
   const loading = shallowRef(false)
   const error = shallowRef<unknown>()
 
+  // latest numbers the requests, so a slow answer to an old filter cannot
+  // replace the answer to the newest one.
+  let latest = 0
+
   async function load(filter: DeviceFilter) {
+    const request = ++latest
     loading.value = true
     error.value = undefined
     try {
@@ -74,12 +79,19 @@ export function useDeviceList() {
           per_page: filter.perPage,
         },
       })
+      if (request !== latest) {
+        return
+      }
       devices.value = data.devices
       total.value = data.total
     } catch (err) {
-      error.value = err
+      if (request === latest) {
+        error.value = err
+      }
     } finally {
-      loading.value = false
+      if (request === latest) {
+        loading.value = false
+      }
     }
   }
 
