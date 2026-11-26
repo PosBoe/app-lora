@@ -188,6 +188,45 @@ func TestDecodeWorker(t *testing.T) {
 		assert.Empty(t, alarmsOf(t, d3.ID))
 	})
 
+	t.Run("uplinks split across batches still raise their alarm", func(t *testing.T) {
+		eui := randomDevEUI()
+		d := env.device(t, org, deviceRequest{DevEUI: eui, Name: "split", DeviceModelID: m.ID})
+		setDecoder(t, m.ID, &decoderID)
+		send(t, eui, 1, 8, 50, 1)
+		drain(t)
+
+		send(t, eui, 2, 9, 5, 2)  // low battery
+		send(t, eui, 3, 10, 5, 3) // still low
+		small := newDecodeWorker(env.pool, w.logger)
+		small.batch = 1
+		for {
+			n, err := small.runOnce(ctx)
+			require.NoError(t, err)
+			if n == 0 {
+				break
+			}
+		}
+		alarms := alarmsOf(t, d.ID)
+		require.Len(t, alarms, 1)
+		assert.Equal(t, hour(9), alarms[0].RaisedAt.UTC())
+	})
+
+	t.Run("new uplinks are applied in time order, not arrival order", func(t *testing.T) {
+		eui := randomDevEUI()
+		d := env.device(t, org, deviceRequest{DevEUI: eui, Name: "order", DeviceModelID: m.ID})
+		setDecoder(t, m.ID, &decoderID)
+		send(t, eui, 1, 11, 50, 1)
+		drain(t)
+
+		send(t, eui, 3, 14, 5, 3)  // later and low: arrives first
+		send(t, eui, 2, 13, 50, 2) // earlier and fine: arrives second
+		drain(t)
+		alarms := alarmsOf(t, d.ID)
+		require.Len(t, alarms, 1)
+		assert.Equal(t, hour(14), alarms[0].RaisedAt.UTC())
+		assert.Nil(t, alarms[0].ClearedAt, "the earlier uplink does not clear a later alarm")
+	})
+
 	t.Run("the loop starts and stops", func(t *testing.T) {
 		w.start()
 		require.NoError(t, w.close(ctx))

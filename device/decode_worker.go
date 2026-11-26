@@ -1,9 +1,11 @@
 package device
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -28,12 +30,14 @@ const (
 type decodeWorker struct {
 	pool   *pgxpool.Pool
 	logger *slog.Logger
-	stop   chan struct{}
-	done   chan struct{}
+	// batch bounds the uplinks of one transaction; a test makes it small.
+	batch int
+	stop  chan struct{}
+	done  chan struct{}
 }
 
 func newDecodeWorker(pool *pgxpool.Pool, logger *slog.Logger) *decodeWorker {
-	return &decodeWorker{pool: pool, logger: logger}
+	return &decodeWorker{pool: pool, logger: logger, batch: decodeBatch}
 }
 
 // runDecodeWorker ties the worker loop to the lifecycle of the process.
@@ -85,7 +89,7 @@ func (w *decodeWorker) drain() {
 			w.logger.Warn("device: decode uplinks", slog.Any("err", err))
 			return
 		}
-		if n < decodeBatch {
+		if n < w.batch {
 			return
 		}
 	}
@@ -108,7 +112,7 @@ func (w *decodeWorker) runOnce(ctx context.Context) (int, error) {
 	var n int
 	err := pgx.BeginFunc(ctx, w.pool, func(tx pgx.Tx) error {
 		repo := newDecodeRepo(tx)
-		batch, err := repo.pending(ctx, decodeBatch)
+		batch, err := repo.pending(ctx, w.batch)
 		if err != nil {
 			return err
 		}
@@ -176,14 +180,19 @@ func decodeOne(p pendingUplink) decodedValues {
 	return v
 }
 
-// updateAlarms brings the alarms of a device up to date after a batch. It
-// waits while the device still has pending uplinks, because a later batch
-// changes its history. When the new rows all come after the computed point,
+// updateAlarms brings the alarms of a device up to date after a batch. While
+// the device still has pending uplinks, it marks the alarms for a replay,
+// because a later batch changes the history. When the new rows all come after the computed point,
 // it applies them to the active alarms; else it replays all the rows.
 func updateAlarms(ctx context.Context, repo *decodeRepo, k deviceKey, fresh []decodedRow, batch []pendingUplink) error {
 	pending, err := repo.hasPending(ctx, k)
-	if err != nil || pending {
+	if err != nil {
 		return err
+	}
+	if pending {
+		// The rows of this batch are saved, but their alarms are not
+		// applied. A later batch sees only its own rows, so it must replay.
+		return repo.setAlarmsThrough(ctx, k, nil)
 	}
 	through, err := repo.alarmsThrough(ctx, k)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -194,6 +203,13 @@ func updateAlarms(ctx context.Context, repo *decodeRepo, k deviceKey, fresh []de
 	}
 
 	if through != nil && allAfter(batch, k, *through) {
+		// The batch is in uplink id order; the alarm rules need time order.
+		slices.SortFunc(fresh, func(a, b decodedRow) int {
+			if c := a.ReceivedAt.Compare(b.ReceivedAt); c != 0 {
+				return c
+			}
+			return cmp.Compare(a.UplinkID, b.UplinkID)
+		})
 		open, err := repo.activeAlarms(ctx, k)
 		if err != nil {
 			return err
