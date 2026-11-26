@@ -21,6 +21,10 @@ terms, and `DESIGN.md` states the goals and the decisions.
 | `ingest_*.go`       | `/api/v1/ingest/*`: the public routes, the ChirpStack and TTN parsers.  |
 | `uplink_*.go`       | Uplinks: store, attach, the device table, `/api/v1/unmatched`.          |
 | `purge.go`          | The hourly delete of unmatched uplinks older than 30 days.              |
+| `decoder/`          | The payload decoders. See `decoder/README.md`.                          |
+| `decode_worker.go`  | The loop that decodes pending uplinks and keeps the alarms.             |
+| `decode_repo.go`    | The SQL of decoding: pending uplinks, decoded values, alarms.           |
+| `alarm.go`          | `applyAlarms`: the alarm rules over decoded uplinks.                    |
 | `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
 | `errors.go`         | The rule errors and their HTTP status.                                  |
 | `*_repo.go`         | The SQL of the device, device model, and device group tables.           |
@@ -100,6 +104,22 @@ transaction. Both take the file as a text/csv body, which an HTML form cannot se
 - The DevEUI of a device with an uplink cannot change (`hasUplinks`).
 - `testdata/` holds sample bodies of both network servers. They are the evidence of the frozen
   formats F1 and F2.
+
+## Decoding
+
+- `uplinks.decode_pending` marks an uplink that the decode worker must decode. A new uplink of a
+  device, an attached uplink, every uplink of a device whose model changes, and every uplink of
+  the devices of a model whose decoder changes are marked. So a live uplink and years of history
+  take the same path.
+- The worker runs every 2 seconds and drains the marked uplinks in batches of 1,000, one
+  transaction each. A partial index holds only the marked rows, so an idle check is cheap.
+- It decodes with the decoder of the device's model and writes `decoder`, `pulse_count`,
+  `alarms_reported`, `alarms_raised`, and `decode_error`. A model with no decoder clears them.
+- Alarms: while a device has marked uplinks, its alarms wait. Then, if the new rows all come
+  after `devices.alarms_through`, the worker applies them to the active alarms. Else (a decoder
+  change, an attach, a late uplink) it deletes the alarms of the device and replays all its
+  decoded rows. `alarms_through` null means "replay".
+- An alarm clears only on an uplink that reports its kind (`decoder.Result.Reported`).
 
 ## Search
 

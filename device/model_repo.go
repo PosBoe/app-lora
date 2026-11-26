@@ -120,3 +120,10 @@ func (r *modelRepo) delete(ctx context.Context, orgID, id int64) error {
 	}
 	return nil
 }
+
+// setDecoder sets the decoder of a device model, nil for none. It returns
+// pgx.ErrNoRows when there is no such model. Device models of every
+// organization are open to it: only the admin changes a decoder.
+func (r *modelRepo) setDecoder(ctx context.Context, id int64, decoder *string) error {
+	return affectedOne(r.q.Exec(ctx, `UPDATE device_models SET decoder = $2 WHERE id = $1`, id, decoder))
+}

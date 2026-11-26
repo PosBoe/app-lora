@@ -35,15 +35,17 @@ func newUplinkRepo(q pgdb.Querier) *uplinkRepo {
 }
 
 // insert stores an uplink of an integration's organization on the live
-// device with its DevEUI, or as an unmatched uplink. A copy of a stored
-// uplink is not stored again; insert then reports false.
+// device with its DevEUI, or as an unmatched uplink. An uplink of a device is
+// marked for the decode worker. A copy of a stored uplink is not stored
+// again; insert then reports false.
 func (r *uplinkRepo) insert(ctx context.Context, ref *integrationRef, msg *uplinkMessage, receivedAt, storedAt time.Time) (bool, error) {
 	tag, err := r.q.Exec(ctx, `
+		WITH d AS (
+			SELECT id FROM devices WHERE organization_id = $1 AND dev_eui = $3 AND archived_at IS NULL
+		)
 		INSERT INTO uplinks (organization_id, integration_id, device_id, dev_eui, f_cnt, payload,
-			received_at, stored_at)
-		SELECT $1, $2,
-			(SELECT id FROM devices WHERE organization_id = $1 AND dev_eui = $3 AND archived_at IS NULL),
-			$3, $4, $5, $6, $7
+			received_at, stored_at, decode_pending)
+		SELECT $1, $2, (SELECT id FROM d), $3, $4, $5, $6, $7, EXISTS (SELECT 1 FROM d)
 		ON CONFLICT DO NOTHING`,
 		ref.OrganizationID, ref.ID, msg.DevEUI, msg.FCnt, msg.Payload, receivedAt, storedAt)
 	if err != nil {
@@ -52,24 +54,31 @@ func (r *uplinkRepo) insert(ctx context.Context, ref *integrationRef, msg *uplin
 	return tag.RowsAffected() == 1, nil
 }
 
-// attach gives the unmatched uplinks with a DevEUI to a device, and returns
-// how many it gave.
+// attach gives the unmatched uplinks with a DevEUI to a device, marks them
+// for the decode worker, and returns how many it gave. The device's alarms
+// are computed again, because the given uplinks can be older than its
+// newest one.
 func (r *uplinkRepo) attach(ctx context.Context, orgID, deviceID int64, devEUI string) (int64, error) {
 	tag, err := r.q.Exec(ctx, `
-		UPDATE uplinks SET device_id = $2
+		UPDATE uplinks SET device_id = $2, decode_pending = true
 		WHERE organization_id = $1 AND device_id IS NULL AND dev_eui = $3`,
 		orgID, deviceID, devEUI)
 	if err != nil {
 		return 0, err
 	}
-	return tag.RowsAffected(), nil
+	n := tag.RowsAffected()
+	if n > 0 {
+		_, err = r.q.Exec(ctx, `UPDATE devices SET alarms_through = NULL WHERE organization_id = $1 AND id = $2`,
+			orgID, deviceID)
+	}
+	return n, err
 }
 
 // attachMany gives the unmatched uplinks of each DevEUI in devEUIs to the
 // device at the same position of deviceIDs.
 func (r *uplinkRepo) attachMany(ctx context.Context, orgID int64, deviceIDs []int64, devEUIs []string) error {
 	_, err := r.q.Exec(ctx, `
-		UPDATE uplinks u SET device_id = x.id
+		UPDATE uplinks u SET device_id = x.id, decode_pending = true
 		FROM unnest($2::bigint[], $3::text[]) AS x(id, eui)
 		WHERE u.organization_id = $1 AND u.device_id IS NULL AND u.dev_eui = x.eui`,
 		orgID, deviceIDs, devEUIs)

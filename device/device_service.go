@@ -97,6 +97,12 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 		if err := setGroups(ctx, tx, orgID, id, f.GroupIDs); err != nil {
 			return err
 		}
+		if f.DeviceModelID != current.DeviceModelID {
+			// Another model can have another decoder.
+			if err := newDecodeRepo(tx).markDevice(ctx, deviceKey{orgID, id}); err != nil {
+				return err
+			}
+		}
 		if f.DevEUI == current.DevEUI || current.ArchivedAt != nil {
 			return nil
 		}
