@@ -66,6 +66,10 @@ const options = computed<ChartOptions<'line'>>(() => ({
   scales: {
     x: {
       type: 'linear',
+      // The axis ends at the first and the last point, with no padding.
+      bounds: 'data',
+      min: data.value.datasets[0]!.data[0]?.x,
+      max: data.value.datasets[0]!.data.at(-1)?.x,
       grid: { display: false },
       border: { color: tokens.value.subtle },
       ticks: {

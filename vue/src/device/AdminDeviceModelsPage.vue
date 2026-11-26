@@ -62,7 +62,7 @@ useIntervalFn(() => decoding.value && reload(), 3000)
         data-test="admin-models-table"
       >
         <template #[`item.decoder`]="{ item }">
-          <div class="flex items-center gap-2 py-1">
+          <div class="flex flex-col gap-1 py-1">
             <v-select
               :model-value="item.decoder"
               :items="decoderItems"
@@ -72,13 +72,13 @@ useIntervalFn(() => decoding.value && reload(), 3000)
               density="compact"
               variant="outlined"
               hide-details
-              class="flex-1 min-w-0"
+              class="w-64"
               :data-test="`decoder-select-${item.id}`"
               @update:model-value="(v: string | null) => choose(item, v)"
             />
             <span
               v-if="item.pending_uplinks"
-              class="whitespace-nowrap text-sm text-muted"
+              class="text-xs text-muted"
               :data-test="`decoding-${item.id}`"
             >
               {{ $t('adminModels.decoding', { n: item.pending_uplinks }) }}
