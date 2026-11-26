@@ -26,7 +26,8 @@ The words in this file have the meanings that the glossaries give them:
   uplinks.
 - **Decode.** Decode the payload with the decoder of the device model. Get the pulse count and
   the alarm flags. If the device model has no decoder, keep the payload only. When a decoder is
-  added, decode the stored history again.
+  added, decode the stored history again. The first decoder is for the Milesight EM300-DI pulse
+  counter.
 - **My devices.** A list of the devices of the organization, paged on the server for thousands
   of devices. Search by name, DevEUI, or address. Filter by device group, device model, meter
   type, and archived devices. Select many devices to add them to a group, remove them from a
@@ -79,7 +80,9 @@ The words in this file have the meanings that the glossaries give them:
 - The first admin is created with a command on the server. The UI creates no admins.
 - Decoders are Go code in the application. A new decoder ships with a new release.
 - Alarms come only from alarm flags in the decoded payload. An alarm is raised by the first
-  uplink with its flag and cleared by the first decoded uplink without it.
+  uplink with its flag and cleared by the first decoded uplink that reports the kind without the
+  flag. The EM300-DI reports only its battery: a battery at 10 % or less raises "low battery".
+- The pulse chart shows the reported pulse count and the pulses of each day.
 - The platform shows the raw pulse count. It does not convert pulses to m³ or litres.
 - A pulse count does not reset and does not overflow. It only increases.
 - Each integration has its own secret. The network server sends the secret in a request
@@ -102,6 +105,7 @@ The words in this file have the meanings that the glossaries give them:
 - No data export and no public API.
 - No single sign-on, no two-factor login, and no roles inside an organization.
 - No admin changes to the data of an organization, and no deletion of an organization in the UI.
+- No heat meters (energy and volume over M-Bus), for example the Elvaco CMi4110 and CMi4140.
 - No markets outside Moldova and no languages other than Romanian and Russian.
 
 ## Design register

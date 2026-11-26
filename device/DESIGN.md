@@ -156,6 +156,9 @@ without it.
   Reopens when: an organization must remove the data of a device, for example on a legal
   request.
 - **N12** [no guarantee] — A CSV import that changes the devices already present.
+- **N13** [excluded] — Heat meters, which report energy and volume over M-Bus, such as the
+  modules Elvaco CMi4110 and CMi4140.
+  Reopens when: a client company needs to read heat or cooling meters on the platform.
 
 ## Frozen contracts
 

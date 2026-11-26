@@ -106,10 +106,12 @@ _Avoid_: alert, status bit, event
 
 **Alarm kind**:
 The condition that an alarm flag names. All decoders map vendor flags to one shared list of
-alarm kinds, so the UI can name each kind in Romanian and Russian.
+alarm kinds, so the UI can name each kind in Romanian and Russian. The list is: low battery,
+tamper, leak, reverse flow, and cable cut. A decoder reports only the kinds its payload holds.
 _Avoid_: alarm type, alarm code
 
 **Alarm**:
 One period in which a device reports an alarm flag of one alarm kind. The first uplink with the
-flag raises the alarm. The first decoded uplink without the flag clears it.
+flag raises the alarm. The first decoded uplink that reports the kind without the flag clears it.
+An uplink that does not report the kind leaves the alarm as it is.
 _Avoid_: alert, alarm event, incident
