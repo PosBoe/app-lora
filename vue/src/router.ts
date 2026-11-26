@@ -76,6 +76,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { admin: true },
   },
   {
+    path: '/admin/device-models',
+    name: 'AdminDeviceModels',
+    component: () => import('@/device/AdminDeviceModelsPage.vue'),
+    meta: { admin: true },
+  },
+  {
     path: '/health',
     name: 'Health',
     component: () => import('@/system/HealthPage.vue'),

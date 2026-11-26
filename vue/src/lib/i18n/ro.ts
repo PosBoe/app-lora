@@ -11,6 +11,7 @@ export const ro = {
     models: 'Modele',
     groups: 'Grupuri',
     integrations: 'Integrări',
+    adminModels: 'Modele de device',
   },
   common: {
     save: 'Salvează',
@@ -180,6 +181,15 @@ export const ro = {
     fCnt: 'Frame counter',
     payload: 'Payload (hex)',
   },
+  adminModels: {
+    title: 'Modele de device ale tuturor organizațiilor',
+    intro: 'Alege decodorul fiecărui model. Istoricul device-urilor lui se decodează din nou.',
+    organization: 'Organizație',
+    decoder: 'Decodor',
+    noDecoder: 'Fără decodor',
+    decoding: 'se decodează {n} uplink-uri…',
+    empty: 'Nicio organizație nu are încă modele.',
+  },
   meterTypes: {
     water: 'Apă',
     gas: 'Gaz',
@@ -289,6 +299,7 @@ export const ro = {
     ingest_dev_eui_invalid: 'Uplink-ul nu are un DevEUI valid.',
     ingest_payload_invalid: 'Payload-ul nu este base64.',
     ingest_too_large: 'Cererea depășește 1 MB.',
+    decoder_unknown: 'Platforma nu are acest decodor.',
     unknown: 'A apărut o eroare. Încearcă din nou.',
   },
   notFound: {

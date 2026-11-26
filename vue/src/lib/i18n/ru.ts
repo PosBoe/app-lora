@@ -13,6 +13,7 @@ export const ru: Messages = {
     models: 'Модели',
     groups: 'Группы',
     integrations: 'Интеграции',
+    adminModels: 'Модели устройств',
   },
   common: {
     save: 'Сохранить',
@@ -180,6 +181,15 @@ export const ru: Messages = {
     fCnt: 'Frame counter',
     payload: 'Payload (hex)',
   },
+  adminModels: {
+    title: 'Модели устройств всех организаций',
+    intro: 'Выберите декодер для каждой модели. История её устройств будет декодирована заново.',
+    organization: 'Организация',
+    decoder: 'Декодер',
+    noDecoder: 'Без декодера',
+    decoding: 'декодируется uplink-ов: {n}…',
+    empty: 'Ни у одной организации пока нет моделей.',
+  },
   meterTypes: {
     water: 'Вода',
     gas: 'Газ',
@@ -289,6 +299,7 @@ export const ru: Messages = {
     ingest_dev_eui_invalid: 'У uplink-а нет корректного DevEUI.',
     ingest_payload_invalid: 'Payload не в base64.',
     ingest_too_large: 'Запрос больше 1 МБ.',
+    decoder_unknown: 'На платформе нет такого декодера.',
     unknown: 'Произошла ошибка. Попробуйте ещё раз.',
   },
   notFound: {
