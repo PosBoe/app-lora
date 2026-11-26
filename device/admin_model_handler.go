@@ -49,7 +49,7 @@ func (h *adminModelHandler) admin(fn func(w http.ResponseWriter, req *http.Reque
 }
 
 // adminModelResponse is a device model of any organization. The frontend
-// mirrors it in vue/src/core/use-admin-models.ts.
+// mirrors it in vue/src/device/use-admin-models.ts.
 type adminModelResponse struct {
 	ID               int64   `json:"id"`
 	OrganizationID   int64   `json:"organization_id"`

@@ -83,6 +83,16 @@ func TestIngest(t *testing.T) {
 		assert.Len(t, uplinksOf(t, d.ID), 1)
 	})
 
+	t.Run("a redelivery with no time of its own is stored once", func(t *testing.T) {
+		eui := randomDevEUI()
+		d := env.device(t, org, deviceRequest{DevEUI: eui, Name: "d", DeviceModelID: m.ID})
+		body := []byte(`{"deviceInfo":{"devEui":"` + eui + `"},"fCnt":5,"data":"AQ=="}`)
+		for range 2 {
+			require.Equal(t, http.StatusNoContent, env.ingest(t, chirpStackUpPath, cs.Secret, "application/json", body).Code)
+		}
+		assert.Len(t, uplinksOf(t, d.ID), 1)
+	})
+
 	t.Run("an unknown DevEUI and an archived device give unmatched uplinks", func(t *testing.T) {
 		unknown := randomDevEUI()
 		archived := env.device(t, org, deviceRequest{DevEUI: randomDevEUI(), Name: "old", DeviceModelID: m.ID})

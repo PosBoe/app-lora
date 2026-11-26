@@ -38,16 +38,28 @@ func newUplinkRepo(q pgdb.Querier) *uplinkRepo {
 // device with its DevEUI, or as an unmatched uplink. An uplink of a device is
 // marked for the decode worker. A copy of a stored uplink is not stored
 // again; insert then reports false.
-func (r *uplinkRepo) insert(ctx context.Context, ref *integrationRef, msg *uplinkMessage, receivedAt, storedAt time.Time) (bool, error) {
+//
+// The device row is share-locked, so a DevEUI change waits for this insert
+// (devEUIFree). When dedupSince is set, a stored uplink with the same DevEUI
+// and frame counter since then is taken as a copy: an uplink with no time of
+// its own cannot use the unique key on the receive time.
+func (r *uplinkRepo) insert(ctx context.Context, ref *integrationRef, msg *uplinkMessage,
+	receivedAt, storedAt time.Time, dedupSince *time.Time,
+) (bool, error) {
 	tag, err := r.q.Exec(ctx, `
 		WITH d AS (
-			SELECT id FROM devices WHERE organization_id = $1 AND dev_eui = $3 AND archived_at IS NULL
+			SELECT id FROM devices
+			WHERE organization_id = $1 AND dev_eui = $3 AND archived_at IS NULL
+			FOR SHARE
 		)
 		INSERT INTO uplinks (organization_id, integration_id, device_id, dev_eui, f_cnt, payload,
 			received_at, stored_at, decode_pending)
 		SELECT $1, $2, (SELECT id FROM d), $3, $4, $5, $6, $7, EXISTS (SELECT 1 FROM d)
+		WHERE $8::timestamptz IS NULL OR NOT EXISTS (
+			SELECT 1 FROM uplinks x
+			WHERE x.organization_id = $1 AND x.dev_eui = $3 AND x.f_cnt = $4 AND x.stored_at >= $8)
 		ON CONFLICT DO NOTHING`,
-		ref.OrganizationID, ref.ID, msg.DevEUI, msg.FCnt, msg.Payload, receivedAt, storedAt)
+		ref.OrganizationID, ref.ID, msg.DevEUI, msg.FCnt, msg.Payload, receivedAt, storedAt, dedupSince)
 	if err != nil {
 		return false, err
 	}

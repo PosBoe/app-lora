@@ -3,12 +3,18 @@ package device
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/waneock/app-lora/pkg/clock"
 )
+
+// redeliveryWindow is how long an uplink with no time of its own counts as a
+// copy of a stored one with the same DevEUI and frame counter. A network
+// server sends a copy again within seconds.
+const redeliveryWindow = 10 * time.Minute
 
 // ingestService stores the uplinks that the integrations deliver.
 type ingestService struct {
@@ -44,10 +50,14 @@ func (s *ingestService) authenticate(ctx context.Context, secret string) (*integ
 func (s *ingestService) store(ctx context.Context, ref *integrationRef, msg *uplinkMessage) error {
 	now := s.clock.Now()
 	receivedAt := now
+	var dedupSince *time.Time
 	if msg.ReceivedAt != nil {
 		receivedAt = *msg.ReceivedAt
+	} else {
+		since := now.Add(-redeliveryWindow)
+		dedupSince = &since
 	}
-	if _, err := s.uplinks.insert(ctx, ref, msg, receivedAt, now); err != nil {
+	if _, err := s.uplinks.insert(ctx, ref, msg, receivedAt, now, dedupSince); err != nil {
 		return err
 	}
 	return s.integrations.recordUplink(ctx, ref.ID, now)

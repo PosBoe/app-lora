@@ -29,6 +29,11 @@ func TestParse(t *testing.T) {
 		assert.Equal(t, 90*time.Second, conf.Auth.LockoutDuration)
 	})
 
+	t.Run("a lockout shorter than a second is refused", func(t *testing.T) {
+		_, err := appconf.Parse([]byte("pg:\n  dsn: x\nauth:\n  lockout_duration: 500ms\n"))
+		require.ErrorContains(t, err, "auth.lockout_duration")
+	})
+
 	t.Run("short session ttl", func(t *testing.T) {
 		_, err := appconf.Parse([]byte("pg:\n  dsn: x\nauth:\n  session_ttl: 10m\n"))
 		require.ErrorContains(t, err, "auth.session_ttl")

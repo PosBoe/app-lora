@@ -80,17 +80,13 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 	if err != nil {
 		return nil, err
 	}
-	if f.DevEUI != current.DevEUI {
-		has, err := s.hasUplinks(ctx, orgID, id)
-		if err != nil {
-			return nil, err
-		}
-		if has {
-			return nil, errDevEUILocked
-		}
-	}
 
 	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		if f.DevEUI != current.DevEUI {
+			if err := devEUIFree(ctx, tx, orgID, id); err != nil {
+				return err
+			}
+		}
 		if err := newDeviceRepo(tx).update(ctx, orgID, id, f, s.clock.Now()); err != nil {
 			return err
 		}
@@ -118,9 +114,22 @@ func (s *deviceService) update(ctx context.Context, orgID, id int64, f deviceFie
 	return s.get(ctx, orgID, id)
 }
 
-// hasUplinks reports whether a device has an uplink.
-func (s *deviceService) hasUplinks(ctx context.Context, orgID, id int64) (bool, error) {
-	return s.uplinks.hasAny(ctx, orgID, id)
+// devEUIFree returns errDevEUILocked when a device has an uplink. It locks
+// the device row first: ingestion takes a share lock on the row it stores
+// an uplink on, so no uplink can land between this check and the DevEUI
+// change.
+func devEUIFree(ctx context.Context, tx pgx.Tx, orgID, id int64) error {
+	if err := newDeviceRepo(tx).lockForUpdate(ctx, orgID, id); err != nil {
+		return err
+	}
+	has, err := newUplinkRepo(tx).hasAny(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	if has {
+		return errDevEUILocked
+	}
+	return nil
 }
 
 // writeError turns a constraint error of an insert or an update into a rule

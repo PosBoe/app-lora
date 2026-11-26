@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -75,13 +76,21 @@ func (r *readingRepo) days(ctx context.Context, orgID, deviceID int64, from time
 }
 
 // lastBefore returns the last pulse count of a device before before, or nil.
+// It reads one row through the partial index of decoded uplinks.
 func (r *readingRepo) lastBefore(ctx context.Context, orgID, deviceID int64, before time.Time) (*int64, error) {
-	var n *int64
+	var n int64
 	err := r.q.QueryRow(ctx, `
-		SELECT max(pulse_count) FROM uplinks
-		WHERE organization_id = $1 AND device_id = $2 AND received_at < $3`,
+		SELECT pulse_count FROM uplinks
+		WHERE organization_id = $1 AND device_id = $2 AND pulse_count IS NOT NULL AND received_at < $3
+		ORDER BY received_at DESC, id DESC LIMIT 1`,
 		orgID, deviceID, before).Scan(&n)
-	return n, err
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
 }
 
 // alarms returns a page of the alarms of a device, the newest first, and

@@ -236,3 +236,11 @@ func (r *deviceRepo) insertMany(ctx context.Context, orgID int64, fields []devic
 	})
 	return ids, pgSentinel(err)
 }
+
+// lockForUpdate locks the row of a device until the transaction ends. It
+// returns pgx.ErrNoRows when the organization has no such device.
+func (r *deviceRepo) lockForUpdate(ctx context.Context, orgID, id int64) error {
+	var got int64
+	return r.q.QueryRow(ctx, `SELECT id FROM devices WHERE organization_id = $1 AND id = $2 FOR UPDATE`,
+		orgID, id).Scan(&got)
+}

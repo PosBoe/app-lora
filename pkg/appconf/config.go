@@ -58,7 +58,8 @@ type AuthConfig struct {
 	// LockoutAttempts is the number of failed logins in a row that locks a
 	// login.
 	LockoutAttempts int `yaml:"lockout_attempts"`
-	// LockoutDuration is how long a locked login stays locked.
+	// LockoutDuration is how long a locked login stays locked. 0 takes the
+	// default; the lockout cannot be turned off.
 	LockoutDuration time.Duration `yaml:"lockout_duration"`
 }
 
@@ -136,8 +137,8 @@ func (c *Config) validate() error {
 	if c.Auth.LockoutAttempts < 1 {
 		return fmt.Errorf("auth.lockout_attempts: got %d, want at least 1", c.Auth.LockoutAttempts)
 	}
-	if c.Auth.LockoutDuration < 0 {
-		return fmt.Errorf("auth.lockout_duration: got %s, want 0 or more", c.Auth.LockoutDuration)
+	if c.Auth.LockoutDuration < time.Second {
+		return fmt.Errorf("auth.lockout_duration: got %s, want at least 1s", c.Auth.LockoutDuration)
 	}
 	return nil
 }
