@@ -76,6 +76,12 @@ func (m *Guard) Member(fn func(w http.ResponseWriter, req *http.Request) error) 
 	return m.wrap(accessMember, fn)
 }
 
+// Admin returns a handler that lets in only an admin whose password is not
+// temporary.
+func (m *Guard) Admin(fn func(w http.ResponseWriter, req *http.Request) error) http.Handler {
+	return m.wrap(accessAdmin, fn)
+}
+
 // Caller is the user of a request, for a context outside core.
 type Caller struct {
 	UserID int64

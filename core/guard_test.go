@@ -50,3 +50,18 @@ func TestGuardMember(t *testing.T) {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+func TestGuardAdmin(t *testing.T) {
+	env := newTestEnv(t)
+	env.mux.Handle("GET /api/v1/test/admin", env.guard().Admin(func(w http.ResponseWriter, _ *http.Request) error {
+		httpkit.NoContent(w)
+		return nil
+	}))
+
+	admin := env.do(t, http.MethodGet, "/api/v1/test/admin", nil, env.login(t, env.adminUser(t), testPassword))
+	assert.Equal(t, http.StatusNoContent, admin.Code)
+
+	login, _, _ := env.member(t)
+	member := env.do(t, http.MethodGet, "/api/v1/test/admin", nil, env.login(t, login, testPassword))
+	assert.Equal(t, http.StatusForbidden, member.Code)
+}

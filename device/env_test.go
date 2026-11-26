@@ -46,6 +46,23 @@ func (g testGuard) Member(fn func(w http.ResponseWriter, req *http.Request) erro
 	})
 }
 
+// Admin lets every request in as an admin.
+func (g testGuard) Admin(fn func(w http.ResponseWriter, req *http.Request) error) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req = req.WithContext(core.ContextWithCaller(req.Context(), core.Caller{UserID: 1, IsAdmin: true}))
+		if err := fn(w, req); err != nil {
+			httpkit.WriteError(w, req, g.logger, err)
+		}
+	})
+}
+
+// testNames names no organization; the core tests cover the real names.
+type testNames struct{}
+
+func (testNames) OrganizationNames(context.Context) (map[int64]string, error) {
+	return map[int64]string{}, nil
+}
+
 // testEnv is the device package on the test database, with a fixed clock
 // and the routes on a real mux.
 type testEnv struct {
@@ -67,6 +84,10 @@ func newTestEnv(t *testing.T) *testEnv {
 	registerGroupHandler(mux, &groupHandler{groups: newGroupService(pool), guard: g})
 	registerImportHandler(mux, &importHandler{imports: newImportService(pool), guard: g})
 	registerIngestHandler(mux, newIngestHandler(newIngestService(pool, clk), g.logger))
+	zone, err := time.LoadLocation(dayZone)
+	require.NoError(t, err)
+	registerReadingHandler(mux, &readingHandler{devices: newDeviceService(pool, clk), clock: clk, guard: g, zone: zone})
+	registerAdminModelHandler(mux, &adminModelHandler{pool: pool, names: testNames{}, guard: g})
 	registerUplinkHandler(mux, &uplinkHandler{devices: newDeviceService(pool, clk), uplinks: newUplinkRepo(pool), guard: g})
 	registerIntegrationHandler(mux, &integrationHandler{
 		integrations: newIntegrationService(pool, clk),

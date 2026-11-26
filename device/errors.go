@@ -62,6 +62,8 @@ var (
 	errIngestDevEUI       = &ruleError{"ingest_dev_eui_invalid", "the uplink has no valid DevEUI"}
 	errIngestPayload      = &ruleError{"ingest_payload_invalid", "the payload is not base64"}
 	errChirpStackProtobuf = &ruleError{"chirpstack_protobuf", "set the payload encoding of the ChirpStack integration to JSON"}
+
+	errDecoderUnknown = &ruleError{"decoder_unknown", "the platform has no decoder with this id"}
 )
 
 // ruleStatus is the HTTP status of each rule error that is not 400.

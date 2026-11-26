@@ -25,6 +25,8 @@ terms, and `DESIGN.md` states the goals and the decisions.
 | `decode_worker.go`  | The loop that decodes pending uplinks and keeps the alarms.             |
 | `decode_repo.go`    | The SQL of decoding: pending uplinks, decoded values, alarms.           |
 | `alarm.go`          | `applyAlarms`: the alarm rules over decoded uplinks.                    |
+| `reading_*.go`      | `/api/v1/devices/{id}/pulses` and `/alarms`: points, days, alarms.      |
+| `admin_model_handler.go` | `/api/v1/admin/device-models` and `/decoders`: decoder assignment. |
 | `stats.go`          | `Stats`: the device count of each organization, for the admin.          |
 | `errors.go`         | The rule errors and their HTTP status.                                  |
 | `*_repo.go`         | The SQL of the device, device model, and device group tables.           |
@@ -120,6 +122,11 @@ transaction. Both take the file as a text/csv body, which an HTML form cannot se
   change, an attach, a late uplink) it deletes the alarms of the device and replays all its
   decoded rows. `alarms_through` null means "replay".
 - An alarm clears only on an uplink that reports its kind (`decoder.Result.Reported`).
+- The pulse days are Europe/Chisinau days. The last pulse count of a day is its maximum, because
+  a pulse count only increases. The delta of the first day of a range comes from the last count
+  before the range; a device's first day has none.
+- The admin page names organizations through `OrganizationNames`, which core implements and the
+  composition root binds, so this package reads no table of core.
 
 ## Search
 

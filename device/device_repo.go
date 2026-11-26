@@ -23,8 +23,12 @@ type device struct {
 	ArchivedAt    *time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	// HasDecoder tells whether the device model has a decoder.
+	HasDecoder bool
 	// LastUplinkAt is the receive time of the newest uplink, or nil.
 	LastUplinkAt *time.Time
+	// ActiveAlarms is filled by the service: the kinds of the active alarms.
+	ActiveAlarms []string
 	// Groups is filled by the service, not by the device queries.
 	Groups []groupRef
 }
@@ -51,6 +55,7 @@ func newDeviceRepo(q pgdb.Querier) *deviceRepo {
 
 const deviceColumns = `d.id, d.dev_eui, d.name, d.device_model_id, m.vendor, m.model,
 	d.meter_type, d.address, d.note, d.archived_at, d.created_at, d.updated_at,
+	m.decoder IS NOT NULL,
 	(SELECT max(u.received_at) FROM uplinks u
 	 WHERE u.organization_id = d.organization_id AND u.device_id = d.id)`
 
@@ -61,7 +66,7 @@ func scanDevice(row pgx.Row, extra ...any) (*device, error) {
 	d := new(device)
 	dest := append([]any{&d.ID, &d.DevEUI, &d.Name, &d.DeviceModelID, &d.Vendor, &d.Model,
 		&d.MeterType, &d.Address, &d.Note, &d.ArchivedAt, &d.CreatedAt, &d.UpdatedAt,
-		&d.LastUplinkAt}, extra...)
+		&d.HasDecoder, &d.LastUplinkAt}, extra...)
 	if err := row.Scan(dest...); err != nil {
 		return nil, err
 	}

@@ -127,3 +127,36 @@ func (r *modelRepo) delete(ctx context.Context, orgID, id int64) error {
 func (r *modelRepo) setDecoder(ctx context.Context, id int64, decoder *string) error {
 	return affectedOne(r.q.Exec(ctx, `UPDATE device_models SET decoder = $2 WHERE id = $1`, id, decoder))
 }
+
+// adminModel is a device model of any organization, for the admin.
+type adminModel struct {
+	ID             int64
+	OrganizationID int64
+	Vendor         string
+	Model          string
+	Decoder        *string
+	DeviceCount    int
+	PendingUplinks int
+}
+
+// listAll returns the device models of all organizations, with their device
+// count and the uplinks of their devices that wait for the decode worker.
+func (r *modelRepo) listAll(ctx context.Context) ([]adminModel, error) {
+	rows, err := r.q.Query(ctx, `
+		SELECT m.id, m.organization_id, m.vendor, m.model, m.decoder,
+			(SELECT count(*) FROM devices d
+			 WHERE d.organization_id = m.organization_id AND d.device_model_id = m.id),
+			(SELECT count(*) FROM uplinks u
+			 JOIN devices d ON d.organization_id = u.organization_id AND d.id = u.device_id
+			 WHERE u.decode_pending AND d.organization_id = m.organization_id AND d.device_model_id = m.id)
+		FROM device_models m
+		ORDER BY lower(m.vendor), lower(m.model), m.organization_id, m.id`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (adminModel, error) {
+		var m adminModel
+		err := row.Scan(&m.ID, &m.OrganizationID, &m.Vendor, &m.Model, &m.Decoder, &m.DeviceCount, &m.PendingUplinks)
+		return m, err
+	})
+}

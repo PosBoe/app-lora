@@ -169,8 +169,8 @@ func (s *deviceService) list(ctx context.Context, orgID int64, q listQuery) ([]*
 	return devices, total, nil
 }
 
-// fillGroups sets the Groups of each device with one query. It mutates the
-// devices.
+// fillGroups sets the Groups and the ActiveAlarms of each device, with one
+// query each. It mutates the devices.
 func (s *deviceService) fillGroups(ctx context.Context, orgID int64, devices []*device) error {
 	if len(devices) == 0 {
 		return nil
@@ -183,8 +183,13 @@ func (s *deviceService) fillGroups(ctx context.Context, orgID int64, devices []*
 	if err != nil {
 		return err
 	}
+	alarms, err := newReadingRepo(s.pool).activeKinds(ctx, orgID, ids)
+	if err != nil {
+		return err
+	}
 	for _, d := range devices {
 		d.Groups = byDevice[d.ID]
+		d.ActiveAlarms = alarms[d.ID]
 	}
 	return nil
 }

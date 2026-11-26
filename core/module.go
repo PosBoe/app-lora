@@ -14,6 +14,7 @@ var Module = fx.Module("core",
 		newGuard,
 		newAuthHandler,
 		newAdminHandler,
+		newDirectory,
 	),
 	fx.Invoke(registerAuthHandler, registerAdminHandler),
 )

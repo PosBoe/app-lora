@@ -35,9 +35,10 @@ func Modules() []fx.Option {
 		system.Module,
 		core.Module,
 		device.Module,
-		// core counts devices through its own interface, so it does not
-		// import the device context.
+		// Each context declares what it needs of the other, so core does
+		// not import device and device reads no table of core.
 		fx.Provide(func(s *device.Stats) core.DeviceStats { return s }),
+		fx.Provide(func(d *core.Directory) device.OrganizationNames { return d }),
 		Module,
 	}
 }

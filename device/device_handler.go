@@ -48,6 +48,7 @@ type deviceResponse struct {
 	UpdatedAt    time.Time          `json:"updated_at"`
 	LastUplinkAt *time.Time         `json:"last_uplink_at"`
 	Groups       []groupRefResponse `json:"groups"`
+	ActiveAlarms []string           `json:"active_alarms"`
 }
 
 type groupRefResponse struct {
@@ -56,9 +57,10 @@ type groupRefResponse struct {
 }
 
 type modelRefResponse struct {
-	ID     int64  `json:"id"`
-	Vendor string `json:"vendor"`
-	Model  string `json:"model"`
+	ID         int64  `json:"id"`
+	Vendor     string `json:"vendor"`
+	Model      string `json:"model"`
+	HasDecoder bool   `json:"has_decoder"`
 }
 
 func newDeviceResponse(d *device) deviceResponse {
@@ -67,11 +69,14 @@ func newDeviceResponse(d *device) deviceResponse {
 		groups[i] = groupRefResponse(g)
 	}
 	return deviceResponse{
-		Groups:       groups,
-		ID:           d.ID,
-		DevEUI:       d.DevEUI,
-		Name:         d.Name,
-		DeviceModel:  modelRefResponse{ID: d.DeviceModelID, Vendor: d.Vendor, Model: d.Model},
+		Groups: groups,
+		ID:     d.ID,
+		DevEUI: d.DevEUI,
+		Name:   d.Name,
+		DeviceModel: modelRefResponse{
+			ID: d.DeviceModelID, Vendor: d.Vendor, Model: d.Model, HasDecoder: d.HasDecoder,
+		},
+		ActiveAlarms: nonNil(d.ActiveAlarms),
 		MeterType:    d.MeterType,
 		Address:      d.Address,
 		Note:         d.Note,

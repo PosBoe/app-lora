@@ -76,3 +76,19 @@ func (r *organizationRepo) list(ctx context.Context) ([]*organization, error) {
 		return scanOrganization(row)
 	})
 }
+
+// names returns the name of every organization.
+func (r *organizationRepo) names(ctx context.Context) (map[int64]string, error) {
+	rows, err := r.q.Query(ctx, `SELECT id, name FROM organizations`)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[int64]string)
+	var id int64
+	var name string
+	_, err = pgx.ForEachRow(rows, []any{&id, &name}, func() error {
+		out[id] = name
+		return nil
+	})
+	return out, err
+}
